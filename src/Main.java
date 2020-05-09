@@ -8,6 +8,19 @@ public class Main {
      * start cli to receive commands
      */
     public static void main(String[] args) {
+        Cli cli = new Cli();
 
+        Integer port = cli.getParamInt("port");
+
+        Server server = new Server(port);
+        server.start();
+        try {
+            cli.getCommands();
+        } catch (InterruptedException e) {
+            server.interrupt();
+            System.exit(0);
+        }
+        //new OwnClient(ownServer);
     }
+
 }

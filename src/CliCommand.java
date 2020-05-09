@@ -1,12 +1,11 @@
 /**
  * list of possible commands
- *
- * @todo also add params information and add them to the toString method
  */
 public enum CliCommand {
     Help("help"),
     Send("send"),
-    Connect("connect");
+    Connect("connect"),
+    Exit("exit");
 
     private final String _name;
 

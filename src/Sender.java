@@ -11,7 +11,7 @@ public class Sender extends Thread {
         this._queue = queue;
     }
 
-    private CommandContainer _getNextCommand() {
+    private CliCommand _getNextCommand() {
         return this._queue.getNext();
     }
 }

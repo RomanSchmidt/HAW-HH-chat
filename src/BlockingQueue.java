@@ -4,21 +4,21 @@ import java.util.ArrayList;
  * a queue of commands, where all command executor threads can take the next one (thread save)
  */
 public class BlockingQueue {
-    private final ArrayList<CommandContainer> _commands = new ArrayList<>();
+    private final ArrayList<CliCommand> _commands = new ArrayList<>();
 
     /**
      * @todo implement
      * add command to queue
      * wake up senders
      */
-    public void enqueue(CommandContainer command) {
+    public void enqueue(CliCommand command) {
         this._commands.add(command);
     }
 
     /**
      * returns the next command or null if nothing exists
      */
-    public synchronized CommandContainer getNext() {
+    public synchronized CliCommand getNext() {
         if (this._commands.size() == 0) {
             return null;
         }
