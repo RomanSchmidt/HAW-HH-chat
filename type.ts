@@ -6,50 +6,57 @@ enum MessageType {
     disconnect = 5
 }
 
+type UID = {
+    IP: String;
+    Port: number;
+}
+
 // Parameter in all requests
 type Header = {
     type: MessageType;
-    senderName?: String; // länge = 3-20 nur type1 => warum ist es dann ein allgemeiner header?
-    UIDSender: String; // ip:port
-    UIDReceiver: String; // ip:port
+    UIDSender: UID;
+    UIDReceiver: UID;
 }
 
 // just for routing requests
 type RoutingTableElement = {
-    destinationIP: String;
-    destinationPort: number;
+    destinationUID: UID;
+    senderName: String; // länge = 3-20
     costsToDestination: number; // Anzahl der hops / 0 bei eigener ip
-    changedRecently: boolean; //  flag die angibt, ob sich an der  Route kürzlich etwas geändert hat
-    nextGatewayIP: String,
-    nextGatewayPort: number
 }
 
 type RoutingRequest = {
     header: Header & {
         type: MessageType.routingRequest;
     };
-    routingTable: RoutingTableElement[];
+    content: {
+        routingTable: RoutingTableElement[];
+    }
 }
 
 type RoutingResponse = {
     header: Header & {
         type: MessageType.routingResponse;
     };
-    routingTable: RoutingTableElement[];
+    content: {
+        routingTable: RoutingTableElement[];
+    }
 }
 
 type ChatMassage = {
     header: Header & {
-        type: MessageType.chatMessage;
-        senderName: String
+        type: MessageType.chatMessage
     };
-    message: String; // length = ?
+    content: {
+        message: String; // length = ?
+    }
 }
 
-type ConnectMassage = {
+type Connect = {
     header: Header & {
         type: MessageType.connect;
     };
+    senderName: String; // länge = 3-20
 }
 
 type DisconnectMessage = {
