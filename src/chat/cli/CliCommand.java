@@ -6,7 +6,7 @@ package chat.cli;
 public enum CliCommand {
     Help("/help"),
     Select("/messageTo"),
-    UserList("/userList"),
+    UserList("/user"),
     Send("/send"),
     Connect("/connect"),
     Exit("/exit");

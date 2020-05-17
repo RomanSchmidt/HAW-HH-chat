@@ -10,6 +10,7 @@ public class Main {
         String name = cli.getParamString("name");
         Integer port = cli.getParamInt("port");
 
+        System.out.println("ASIFK: " + name);
         Thread server = new Thread(new Server(port, name));
         server.start();
         try {

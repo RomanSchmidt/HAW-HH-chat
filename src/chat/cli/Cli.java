@@ -1,11 +1,11 @@
 package chat.cli;
 
-import chat.message.MessageContainer;
-import chat.routing.Routing;
 import chat.Server;
 import chat.Uid;
 import chat.client.AClient;
 import chat.client.Client;
+import chat.message.MessageContainer;
+import chat.routing.Routing;
 
 import java.util.Scanner;
 
@@ -59,7 +59,7 @@ public class Cli {
      * make an output of all commands
      */
     private void _printAllCommands() {
-        System.out.println("_______ALLOWED COMMANDS_______");
+        System.out.println("___________COMMANDS___________");
         for (CliCommand command : CliCommand.values()) {
             System.out.println(command);
         }
@@ -84,7 +84,7 @@ public class Cli {
             case Connect:
                 String ip = this.getParamString("ip");
                 Integer port = this.getParamInt("port");
-                this._connect(new Uid(ip, port), Server.getName());
+                this._connect(new Uid(ip, port), "");
                 return true;
             case Exit:
                 System.out.println("exiting");
@@ -107,8 +107,12 @@ public class Cli {
 
     private void _printAllClients() {
         System.out.println("_____________USER_____________");
-        for (String clientName : Routing.getInstance().getAllClients()) {
-            System.out.println(clientName);
+        for (AClient client : Routing.getInstance().getAllClients()) {
+            if (client instanceof Client) {
+                System.out.println(ANSI_BLUE + client.getName() + ANSI_RESET);
+            } else {
+                System.out.println(client.getName());
+            }
         }
         System.out.println("______________________________");
     }

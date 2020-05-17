@@ -1,6 +1,7 @@
 package chat;
 
 import chat.client.Client;
+import chat.client.ForeignClient;
 import chat.message.MessageContainer;
 import chat.message.MessageHandler;
 import chat.routing.Routing;
@@ -20,12 +21,15 @@ import java.util.stream.Collectors;
  * send a message to a known client
  */
 public class Server implements Runnable {
-    private static Uid _uID;
+    private static Uid _uid;
     private static String _name;
+    private final Client _client;
 
     Server(Integer port, String name) {
-        Server._uID = new Uid(this._getOwnIp(), port);
+        Server._uid = new Uid(this._getOwnIp(), port);
         Server._name = name;
+        this._client = new Client(Server._uid, name);
+        Routing.getInstance().addClient(this._client, Server.getUid(), 0);
     }
 
     public static String getName() {
@@ -33,7 +37,7 @@ public class Server implements Runnable {
     }
 
     public static Uid getUid() {
-        return Server._uID;
+        return Server._uid;
     }
 
     /**
@@ -60,7 +64,7 @@ public class Server implements Runnable {
     @Override
     public void run() {
         try {
-            ServerSocket socket = new ServerSocket(this._uID.getPort());
+            ServerSocket socket = new ServerSocket(this._uid.getPort());
             while (true) {
                 System.out.println("server waits for client");
                 try (Socket clientSocket = socket.accept()) {
@@ -68,8 +72,7 @@ public class Server implements Runnable {
                     BufferedReader messageBuffer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                     String jsonString = messageBuffer.lines().collect(Collectors.joining());
                     Uid uid = new Uid(clientSocket.getInetAddress().getHostAddress(), clientSocket.getPort());
-                    Client client = new Client(uid, Server.getName());
-                    Routing.getInstance().addClient(client, Server.getUid(), 0);
+                    ForeignClient client = new ForeignClient(uid, Server.getName());
                     MessageContainer message = new MessageContainer(jsonString, client);
                     MessageHandler.receive(message);
                 }

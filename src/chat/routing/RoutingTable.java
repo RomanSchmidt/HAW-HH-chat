@@ -29,9 +29,6 @@ public class RoutingTable {
         System.err.println("implement analyzeForeignTable");
     }
 
-    /**
-     * update the table with all information it needs to be routed correctly
-     */
     public void addClient(AClient client, Uid gateWayUid, int metric) {
         RoutingTableElement element = new RoutingTableElement(
                 client.getUid(),
@@ -41,7 +38,6 @@ public class RoutingTable {
                 true
         );
         this._table.put(client.getUid(), element);
-        System.err.println("implement addClient");
     }
 
     /**

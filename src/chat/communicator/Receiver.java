@@ -3,7 +3,6 @@ package chat.communicator;
 import chat.Server;
 import chat.Uid;
 import chat.client.AClient;
-import chat.client.Client;
 import chat.client.OwnClient;
 import chat.message.MessageContainer;
 import chat.message.MessageHandler;
@@ -42,7 +41,7 @@ public class Receiver implements Runnable {
                 System.out.println("got connect message from: " + header.getUidSender() + " (" + message.getSenderName() + ")");
                 OwnClient client = new OwnClient(header.getUidSender(), message.getSenderName());
                 Routing.getInstance().addClient(client, Server.getUid(), 1);
-                MessageHandler.send(this._createRoutingMessage(MessageContainer.getOwnUid(), this._message.getMessage().getHeader().getUidSender(), client));
+                MessageHandler.send(this._createRoutingMessage(MessageContainer.getOwnUid(), header.getUidSender(), client));
                 break;
             default:
                 System.err.println("unknown message type: " + this._message.getMessageType());

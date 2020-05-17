@@ -3,24 +3,19 @@ package chat.message;
 import chat.Server;
 import chat.Uid;
 import chat.client.AClient;
-import chat.client.Client;
-import chat.message.model.MessageType;
 import chat.message.model.AMessage;
+import chat.message.model.MessageType;
 
 /**
  * message with all information it needs
  */
 public class MessageContainer {
+    private final AClient _client;
     //private final Actor _from;
     //private final Actor _to;
-    private  AMessage _message;
-    private  MessageType _messageType;
-    private final AClient _client;
-    private  String _jsonString;
-
-    public AClient getClient() {
-        return this._client;
-    }
+    private AMessage _message;
+    private MessageType _messageType;
+    private String _jsonString;
 
     private MessageContainer(AClient client) {
         this._client = client;
@@ -35,7 +30,7 @@ public class MessageContainer {
         this._jsonString = Parser.transfer(message);
     }
 
-    public MessageContainer(String jsonString, Client client) {
+    public MessageContainer(String jsonString, AClient client) {
         this(client);
         this._message = Parser.transfer(jsonString);
         this._messageType = MessageType.mapFromCode(this._message.getHeader().getMessageType());
@@ -46,6 +41,10 @@ public class MessageContainer {
 
     public static Uid getOwnUid() {
         return Server.getUid();
+    }
+
+    public AClient getClient() {
+        return this._client;
     }
 
     public Uid getUid() {

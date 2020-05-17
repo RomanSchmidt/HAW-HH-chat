@@ -14,16 +14,9 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class Routing {
     private static final Routing _instance = new Routing();
+    // client by name
     private final HashMap<String, AClient> _clients = new HashMap<>();
 
-    /**
-     * @todo think about a map for faster remove and add
-     */
-    private final Server[] _knownServers = new Server[]{};
-    /**
-     * @todo think about a map for faster remove and add
-     */
-    private final AClient[] _knownClients = new ForeignClient[]{};
     private final RoutingTable _table = new RoutingTable();
 
     private Routing() {
@@ -36,12 +29,12 @@ public class Routing {
     /**
      * return a list of client names
      */
-    public String[] getAllClients() {
-        String[] clients = new String[this._clients.size()];
+    public AClient[] getAllClients() {
+        AClient[] clients = new AClient[this._clients.size()];
 
         int i = 0;
-        for (String clientName : this._clients.keySet()) {
-            clients[i++] = clientName;
+        for (AClient client : this._clients.values()) {
+            clients[i++] = client;
         }
 
         return clients;
@@ -62,31 +55,25 @@ public class Routing {
         }
     }
 
-    /**
-     * @todo implement
-     * if client is known, throw, return or return an error? @todo discuss
-     * add client from known clients
-     * populate new table
-     */
     public void addClient(AClient client, Uid gateway, int metric) {
+        System.out.println("add client: " + client.getName());
         this._table.addClient(client, gateway, metric);
+        this._clients.put(client.getName(), client);
+        this._populateChanges(this._clients.get(Server.getUid()));
     }
 
-    /**
-     * @todo implement
-     * if client is not known, throw, return or return an error? @todo discuss
-     * remove client from known clients
-     */
     public void removeClient(AClient client) {
         System.err.println("implement removeClient");
         this._table.removeClient(client);
+        this._clients.remove(client.getName());
+        this._populateChanges(this._clients.get(Server.getUid()));
     }
 
     /**
      * @todo implement
      * let all known servers know about the changes, except the one you got it from
      */
-    private void _populateChanges(ForeignClient from) {
+    private void _populateChanges(AClient from) {
         System.err.println("implement _populateChanges");
     }
 
@@ -109,7 +96,7 @@ public class Routing {
      */
     public AClient getReceiver(Uid receiverUid) {
         System.err.println("implement getReceiver");
-        return this._knownClients[0];
+        return null;
     }
 
     public AClient getClientByName(String clientNameSearch) {

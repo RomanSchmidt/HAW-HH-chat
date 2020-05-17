@@ -7,7 +7,7 @@ import chat.Uid;
  * handle clients and handle message send
  */
 public class ForeignClient extends AClient {
-    ForeignClient(Uid uid, String name) {
+    public ForeignClient(Uid uid, String name) {
         super(uid, name);
     }
 

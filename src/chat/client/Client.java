@@ -8,25 +8,25 @@ import chat.message.model.ConnectMessage;
 import chat.message.model.DisconnectMessage;
 import chat.routing.Routing;
 
+/**
+ * internal class which acts like a client
+ */
 public class Client extends AClient {
     public Client(Uid uid, String name) {
         super(uid, name);
     }
 
     public static Client connect(Uid uidSender, Uid uidReceiver, String name) {
-        System.out.println("connecting to: " + uidReceiver.toString() + "(" + name + ")");
+        System.out.println("connecting to: " + uidReceiver.toString());
         Client client = new Client(uidReceiver, name);
-        MessageHandler.send(new MessageContainer(new ConnectMessage(uidSender, uidReceiver, name), client));
-        Routing.getInstance().addClient(client, Server.getUid(), 1);
+        MessageHandler.send(new MessageContainer(new ConnectMessage(uidSender, uidReceiver, Server.getName()), client));
         return client;
     }
 
-    // @todo implement
-    // remove from table
     public void disconnect(Uid sender) {
-        System.err.println("implement client disco");
+        System.out.println("peer disconnecting from: " + sender);
         MessageHandler.send(new MessageContainer(new DisconnectMessage(sender, this.getUid()), this));
-        System.out.println("Socket closed...");
+        Routing.getInstance().removeClient(this);
     }
 
     @Override
