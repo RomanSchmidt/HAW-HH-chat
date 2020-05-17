@@ -1,11 +1,11 @@
 {
   "header": {
     "type": 3,
-    "UIDSender": {
+    "uidSender": {
       "ip": "10.10.10.10",
       "port": 99
     },
-    "UIDReceiver": {
+    "uidReceiver": {
       "ip": "10.10.10.11",
       "port": 99
     }
@@ -13,14 +13,14 @@
   "content": {
     "routingTable": [
       {
-        "destinationUID": {
+        "destinationUid": {
           "ip": "10.10.10.11",
           "port": 99
         },
         "costsToDestination": 1
       },
       {
-        "destinationUID": {
+        "destinationUid": {
           "ip": "10.10.10.10",
           "port": 99
         },

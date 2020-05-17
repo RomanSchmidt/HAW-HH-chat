@@ -1,11 +1,15 @@
+package chat.cli;
+
 /**
  * list of possible commands
  */
 public enum CliCommand {
-    Help("help"),
-    Send("send"),
-    Connect("connect"),
-    Exit("exit");
+    Help("/help"),
+    Select("/messageTo"),
+    UserList("/userList"),
+    Send("/send"),
+    Connect("/connect"),
+    Exit("/exit");
 
     private final String _name;
 

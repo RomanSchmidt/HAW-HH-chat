@@ -1,3 +1,12 @@
+package chat.cli;
+
+import chat.message.MessageContainer;
+import chat.routing.Routing;
+import chat.Server;
+import chat.Uid;
+import chat.client.AClient;
+import chat.client.Client;
+
 import java.util.Scanner;
 
 /**
@@ -15,9 +24,10 @@ public class Cli {
     public static final String ANSI_PURPLE = "\u001B[35m";
     public static final String ANSI_CYAN = "\u001B[36m";
     public static final String ANSI_WHITE = "\u001B[37m";
-    private OwnClient _ownClient;
+    private Client _client;
+    private AClient _clientToChatWith;
 
-    Cli() {
+    public Cli() {
 
     }
 
@@ -31,11 +41,9 @@ public class Cli {
             String command = this._readNextCommand();
             CliCommand convertedCommand = this._convertCommand(command);
             if (convertedCommand == null) {
-
                 System.out.print(ANSI_RED + "unknown command: " + ANSI_RESET + command + "\n");
             } else {
                 System.out.print("entered command: " + ANSI_GREEN + command + ANSI_RESET + "\n");
-                // @todo get this from real params
                 doRun = this._executeCommand(convertedCommand);
             }
         }
@@ -64,13 +72,19 @@ public class Cli {
             case Help:
                 this._printAllCommands();
                 return true;
+            case Select:
+                this._chooseClient();
+                return true;
+            case UserList:
+                this._printAllClients();
+                return true;
             case Send:
-                System.out.println(ANSI_YELLOW + "not implemented" + ANSI_RESET);
-                break;
+                this._sendChatMessage();
+                return true;
             case Connect:
                 String ip = this.getParamString("ip");
                 Integer port = this.getParamInt("port");
-                this._connect(ip, port);
+                this._connect(new Uid(ip, port), Server.getName());
                 return true;
             case Exit:
                 System.out.println("exiting");
@@ -80,11 +94,38 @@ public class Cli {
         return false;
     }
 
-    private void _connect(String ip, Integer port) {
-        if (null != this._ownClient) {
-            this._ownClient.disconnect();
+    private void _chooseClient() {
+        String clientName = this.getParamString("client name");
+        AClient client = Routing.getInstance().getClientByName(clientName);
+        if (null == client) {
+            System.out.println(ANSI_RED + "unknown User" + ANSI_RESET);
+        } else {
+            this._clientToChatWith = client;
+            System.out.println(ANSI_GREEN + "chosen user: " + ANSI_RESET + client.getName());
         }
-        this._ownClient = new OwnClient(ip, port);
+    }
+
+    private void _printAllClients() {
+        System.out.println("_____________USER_____________");
+        for (String clientName : Routing.getInstance().getAllClients()) {
+            System.out.println(clientName);
+        }
+        System.out.println("______________________________");
+    }
+
+    private void _sendChatMessage() {
+        if (null == this._client) {
+            System.out.println(ANSI_RED + "connect first" + ANSI_RESET);
+        } else {
+            this._client.sendMessage(new MessageContainer("some message", this._client));
+        }
+    }
+
+    private void _connect(Uid uid, String name) {
+        if (null != this._client) {
+            this._client.disconnect(Server.getUid());
+        }
+        this._client = Client.connect(Server.getUid(), uid, name);
     }
 
     public String getParamString(String name) {
@@ -98,7 +139,7 @@ public class Cli {
         System.out.print(name + ": ");
         Scanner in = new Scanner(System.in);
 
-        return  in.nextInt();
+        return in.nextInt();
     }
 
     // convert the string to known commands from CliCommand or return null
@@ -109,7 +150,15 @@ public class Cli {
                 return command;
             }
         }
-        return null;
+        if (commandString.startsWith("/")) {
+            return null;
+        }
+        if (this._clientToChatWith == null) {
+            System.out.println(ANSI_RED + "no user selected" + ANSI_RESET);
+            return null;
+        } else {
+            return CliCommand.Send;
+        }
     }
 
     // get command and parameters from system input

@@ -1,0 +1,23 @@
+package chat;
+
+public class Uid {
+    private final String ip;
+    private final int port;
+
+    public Uid(String ip, int port) {
+        this.ip = ip;
+        this.port = port;
+    }
+
+    public String getIp() {
+        return this.ip;
+    }
+
+    public int getPort() {
+        return this.port;
+    }
+
+    public String toString() {
+        return this.ip + ":" + this.port;
+    }
+}

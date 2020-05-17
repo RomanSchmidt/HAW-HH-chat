@@ -6,32 +6,23 @@ enum MessageType {
     disconnect = 5
 }
 
-type UID = {
-    IP: String;
-    Port: number;
+type Uid = {
+    ip: String;
+    port: number;
 }
 
 // Parameter in all requests
 type Header = {
     type: MessageType;
-    UIDSender: UID;
-    UIDReceiver: UID;
+    uidSender: Uid;
+    uidReceiver: Uid;
 }
 
 // just for routing requests
 type RoutingTableElement = {
-    destinationUID: UID;
+    destinationUid: Uid;
     senderName: String; // länge = 3-20
     costsToDestination: number; // Anzahl der hops / 0 bei eigener ip
-}
-
-type RoutingRequest = {
-    header: Header & {
-        type: MessageType.routingRequest;
-    };
-    content: {
-        routingTable: RoutingTableElement[];
-    }
 }
 
 type RoutingResponse = {
