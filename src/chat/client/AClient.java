@@ -23,7 +23,7 @@ public abstract class AClient implements Actor {
     }
 
     public void sendMessage(MessageContainer message) {
-        System.out.println("sending message to server: " + message.getMessage().getHeader().getMessageType());
+        System.out.println("sending message to server: " + message.getMessage().getHeader().getUidReceiver() + " (" + message.getMessage().getHeader().getUidReceiver() + ")");
         Communicator.send(message);
     }
 

@@ -147,12 +147,14 @@ public abstract class Cli {
 
     private static void _sendChatMessage(String chatMessage) {
         if (null == Cli._clientToChatWith) {
-            System.out.println(ANSI_RED + "chose a user before." + ANSI_RESET + ANSI_GREEN + " /user /messageTo" + ANSI_RESET);
+            System.out.println(ANSI_RED + "chose a user before." + ANSI_RESET);
+            Cli._printAllCommands();
         } else {
             ChatMessageContent content = new ChatMessageContent(chatMessage);
-            ChatMessage message = (ChatMessage) AMessage.createByType(MessageType.chatMessage, Server.getUid(), Cli._clientToChatWith.getUid(), Server.getName(), content);
+            ChatMessage message = (ChatMessage) AMessage.createByType(MessageType.chatMessage, Server.getUid(), Cli._clientToChatWith.getUid(), Cli._clientToChatWith.getName(), content);
             System.out.println("chat to: " + message.getSenderName());
-            Cli._clientToChatWith.sendMessage(new MessageContainer(message, Cli._clientToChatWith));
+            MessageContainer container = new MessageContainer(message, Cli._clientToChatWith);
+            Cli._clientToChatWith.sendMessage(container);
         }
     }
 

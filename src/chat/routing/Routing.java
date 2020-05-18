@@ -218,10 +218,12 @@ public class Routing {
 
     public void sendMessage(MessageContainer messageContainer) {
         AClient receiverClient = this.getReceiver(messageContainer.getMessage().getHeader().getUidReceiver());
-        System.out.println("got receiver: " + receiverClient);
         if (null == receiverClient) {
             System.err.println("no route found!");
-        } else if (receiverClient.getUid().equals(messageContainer.getUid())) {
+            return;
+        }
+        System.out.println("got receiver: " + receiverClient.getUid());
+        if (receiverClient.getUid().equals(Server.getUid())) {
             Cli.printChatMessage(messageContainer);
         } else {
             receiverClient.sendMessage(messageContainer);
