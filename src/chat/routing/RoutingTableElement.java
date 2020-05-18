@@ -7,14 +7,12 @@ public class RoutingTableElement {
     private final String _destinationName;
     private final Uid _nextGateWayUid;
     private int _metric = 0;
-    private boolean _recentlyChanged;
 
-    public RoutingTableElement(Uid destinationUid, String destinationName, Uid nextGateWayUid, int metric, boolean recentlyChanged) {
+    public RoutingTableElement(Uid destinationUid, String destinationName, Uid nextGateWayUid, int metric) {
         this._destinationUid = destinationUid;
         this._destinationName = destinationName;
         this._nextGateWayUid = nextGateWayUid;
         this._metric = metric;
-        this._recentlyChanged = recentlyChanged;
     }
 
     public String getDestinationName() {
@@ -32,13 +30,4 @@ public class RoutingTableElement {
     public int getMetric() {
         return this._metric;
     }
-
-    public boolean getRecentlyChanged() {
-        return this._recentlyChanged;
-    }
-
-    public void setRecentlyChanged(boolean recentlyChanged) {
-        this._recentlyChanged = recentlyChanged;
-    }
-
 }

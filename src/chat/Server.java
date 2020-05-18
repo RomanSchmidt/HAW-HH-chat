@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 /**
  * start listen on a port
  * receive messages from clients
- * send a message to a known client
  */
 public class Server implements Runnable {
     private static Uid _uid;
@@ -69,10 +68,9 @@ public class Server implements Runnable {
     @Override
     public void run() {
         try {
-            ServerSocket socket = new ServerSocket(this._uid.getPort());
+            ServerSocket socket = new ServerSocket(Server._uid.getPort());
             while (true) {
                 try (Socket clientSocket = socket.accept()) {
-                    System.out.println("client income: " + clientSocket.getRemoteSocketAddress());
                     BufferedReader messageBuffer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                     String jsonString = messageBuffer.lines().collect(Collectors.joining());
                     MessageContainer message = new MessageContainer(jsonString);

@@ -13,6 +13,7 @@ import chat.message.model.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -20,12 +21,11 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class Routing {
     private static final Routing _instance = new Routing();
-    // client by name
     private final HashMap<String, AClient> _clientsByName = new HashMap<>();
     private final HashMap<Uid, AClient> _clientsByUId = new HashMap<>();
     private final HashMap<Uid, ArrayList<AClient>> _clientsByGateWayUid = new HashMap<>();
     private final ArrayList<Uid> _ownClientUids = new ArrayList<>();
-    private final RoutingTable _table = new RoutingTable();
+    private final RoutingTableHandler _tableHandler = new RoutingTableHandler();
 
     private Routing() {
     }
@@ -48,8 +48,33 @@ public class Routing {
         return clients;
     }
 
-    public void addTable(Uid from, RoutingTableElement[] elements) {
-        this._analyzeTable(from, elements);
+    public void addTable(Uid fromUid, RoutingTableElement[] elements) {
+        boolean hasChanges = false;
+        ArrayList<Uid> handledUids = new ArrayList<>();
+        for (RoutingTableElement foreignElement : elements) {
+            if (foreignElement.getDestinationUid().equals(Server.getUid())) {
+                continue;
+            }
+            if (this._ownClientUids.contains(foreignElement.getDestinationUid())) {
+                continue;
+            }
+            handledUids.add(foreignElement.getDestinationUid());
+            RoutingTableElement ownElement = this._tableHandler.getRoutingElementByUid(foreignElement.getDestinationUid());
+            if (ownElement == null || foreignElement.getMetric() < ownElement.getMetric()) {
+                AClient client;
+                if (foreignElement.getDestinationUid().equals(fromUid)) {
+                    client = new OwnClient(foreignElement.getDestinationUid(), foreignElement.getDestinationName());
+                } else {
+                    client = new ForeignClient(foreignElement.getDestinationUid(), foreignElement.getDestinationName());
+                }
+                this.addClient(client, foreignElement.getNextGateWayUid(), foreignElement.getMetric() + 1, false);
+                hasChanges = true;
+            }
+        }
+        this._cleanUpTable(fromUid, handledUids);
+        if (hasChanges) {
+            this._populateChanges(fromUid);
+        }
     }
 
     public void addClient(AClient client, Uid gateway, int metric, boolean doPopulate) {
@@ -57,7 +82,7 @@ public class Routing {
             if (client instanceof OwnClient) {
                 this._ownClientUids.add(client.getUid());
             }
-            this._table.addClient(client, gateway, metric);
+            this._tableHandler.addClient(client, gateway, metric);
             this._clientsByName.put(client.getName(), client);
             this._clientsByUId.put(client.getUid(), client);
             if (!client.getUid().equals(gateway)) {
@@ -73,13 +98,11 @@ public class Routing {
     }
 
     public void removeClient(AClient client, boolean populate) {
-
-        // @todo client to write to should be null if it is this one!
-        RoutingTableElement element = this._table.removeClient(client.getUid());
-        if(null == element || null == element.getDestinationName()) {
+        RoutingTableElement element = this._tableHandler.removeClient(client.getUid());
+        if (null == element || null == element.getDestinationName()) {
             return;
         }
-        System.out.println("removing: " + client.getUid());
+        Cli.clientLeft(client, element.getDestinationName());
         this._clientsByName.remove(element.getDestinationName());
         this._clientsByUId.remove(client.getUid());
         this._clientsByGateWayUid.remove(client.getUid());
@@ -91,14 +114,17 @@ public class Routing {
 
         if (client instanceof Client) {
             this._populateDisconnect((Client) client);
-            System.out.println("shot down?");
-            //Communicator.getExecutor().shutdown();
-            //try {
-            //    Communicator.getExecutor().awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-            //} catch (InterruptedException e) {
-            //    System.out.println("down");
-            //}
-            //return;
+            System.out.println("shoot down?");
+            Communicator.getExecutor().shutdown();
+            try {
+                if (!Communicator.getExecutor().awaitTermination(10, TimeUnit.SECONDS)) {
+                    Communicator.getExecutor().shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                System.out.println("down");
+            } finally {
+                Cli.shutDown();
+            }
         } else if (populate) {
             this._populateChanges(client.getUid());
         }
@@ -123,7 +149,7 @@ public class Routing {
     private void _populateChanges(Uid fromUid) {
         System.out.println("populating table");
         ArrayList<RoutingTableMessageElement> elements = new ArrayList<>();
-        this._table.getTable().forEach((uid, routingTableElement) -> {
+        this._tableHandler.getTable().forEach((uid, routingTableElement) -> {
             elements.add(new RoutingTableMessageElement(routingTableElement.getDestinationUid(), routingTableElement.getDestinationName(), routingTableElement.getMetric()));
         });
         RoutingMessageContent content = new RoutingMessageContent(elements);
@@ -135,35 +161,6 @@ public class Routing {
                 Communicator.send(new MessageContainer(message, client));
             }
         });
-    }
-
-    private void _analyzeTable(Uid fromUid, RoutingTableElement[] elements) {
-        boolean hasChanges = false;
-        ArrayList<Uid> handledUids = new ArrayList<>();
-        for (RoutingTableElement foreignElement : elements) {
-            if (foreignElement.getDestinationUid().equals(Server.getUid())) {
-                continue;
-            }
-            if (this._ownClientUids.contains(foreignElement.getDestinationUid())) {
-                continue;
-            }
-            handledUids.add(foreignElement.getDestinationUid());
-            RoutingTableElement ownElement = this._table.getRoutingElementByUid(foreignElement.getDestinationUid());
-            if (ownElement == null || foreignElement.getMetric() < ownElement.getMetric()) {
-                AClient client;
-                if (foreignElement.getDestinationUid().equals(fromUid)) {
-                    client = new OwnClient(foreignElement.getDestinationUid(), foreignElement.getDestinationName());
-                } else {
-                    client = new ForeignClient(foreignElement.getDestinationUid(), foreignElement.getDestinationName());
-                }
-                this.addClient(client, foreignElement.getNextGateWayUid(), foreignElement.getMetric() + 1, false);
-                hasChanges = true;
-            }
-        }
-        this._cleanUpTable(fromUid, handledUids);
-        if (hasChanges) {
-            this._populateChanges(fromUid);
-        }
     }
 
     private void _cleanUpTable(Uid uid, ArrayList<Uid> handledUids) {
@@ -184,16 +181,12 @@ public class Routing {
         });
     }
 
-    public RoutingTable getTable() {
-        return this._table;
+    public HashMap<Uid, RoutingTableElement> getTable() {
+        return this._tableHandler.getTable();
     }
 
-    /**
-     * @todo implement
-     * figure out if the next receiver is the client directly or the next server for a hop.
-     */
     public AClient getReceiver(Uid receiverUid) {
-        RoutingTableElement element = this._table.getRoutingElementByUid(receiverUid);
+        RoutingTableElement element = this._tableHandler.getRoutingElementByUid(receiverUid);
         if (null == element) {
             return null;
         }

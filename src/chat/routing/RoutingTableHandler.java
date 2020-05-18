@@ -8,10 +8,10 @@ import java.util.HashMap;
 /**
  * handle the table
  */
-public class RoutingTable {
+public class RoutingTableHandler {
     private final HashMap<Uid, RoutingTableElement> _table = new HashMap<>();
 
-    RoutingTable() {
+    RoutingTableHandler() {
     }
 
     public void addClient(AClient client, Uid gateWayUid, int metric) {
@@ -20,14 +20,9 @@ public class RoutingTable {
                 client.getUid(),
                 client.getName(),
                 gateWayUid,
-                metric,
-                true
+                metric
         );
         this._table.put(client.getUid(), element);
-    }
-
-    public void removeClient(AClient client) {
-        this.removeClient(client.getUid());
     }
 
     public RoutingTableElement removeClient(Uid destinationUid) {

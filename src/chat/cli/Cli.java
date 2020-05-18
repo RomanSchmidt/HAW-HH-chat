@@ -33,6 +33,13 @@ public abstract class Cli {
 
     }
 
+    public static void clientLeft(AClient client, String name) {
+        if (Cli._clientToChatWith != null && Cli._clientToChatWith.getUid().equals(client.getUid())) {
+            Cli._clientToChatWith = null;
+        }
+        System.out.println(ANSI_RED + "removing: " + ANSI_RESET + client.getUid() + ANSI_BLUE + " (" + name + ")" + ANSI_RESET);
+    }
+
     /**
      * run, map the string to commands, execute commands, quit if the exit command is send
      */
@@ -46,18 +53,12 @@ public abstract class Cli {
                 if (convertedCommand == null) {
                     System.out.print(ANSI_RED + "unknown command: " + ANSI_RESET + command + "\n");
                 } else {
-                    System.out.print("entered command: " + ANSI_GREEN + command + ANSI_RESET + "\n");
                     doRun = Cli._executeCommand(convertedCommand);
                 }
             } else {
                 Cli._sendChatMessage(command);
             }
         }
-        /*for (Thread t : Thread.getAllStackTraces().keySet()) {
-            if (t.getState() == Thread.State.RUNNABLE) {
-                t.interrupt();
-            }
-        }*/
     }
 
     /**
@@ -102,7 +103,7 @@ public abstract class Cli {
 
     private static void _printTable() {
         System.out.println("_____________TABLE_____________");
-        Routing.getInstance().getTable().getTable().forEach((destinationUid, routingTableElement) -> {
+        Routing.getInstance().getTable().forEach((destinationUid, routingTableElement) -> {
             System.out.println(
                     "DestinationUid: " +
                             routingTableElement.getDestinationUid() +
@@ -200,5 +201,14 @@ public abstract class Cli {
         ChatMessage message = (ChatMessage) messageContainer.getMessage();
         ChatMessageContent content = (ChatMessageContent) message.getContent();
         System.out.println(ANSI_CYAN + "(" + message.getSenderName() + ")" + ANSI_RESET + " " + content.getMessage());
+    }
+
+    public static void shutDown() {
+        System.out.println("tschööö");
+        try {
+            Server.quit();
+        } catch (InterruptedException ignored) {
+        }
+        System.exit(1);
     }
 }

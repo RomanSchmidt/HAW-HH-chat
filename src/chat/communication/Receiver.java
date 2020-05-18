@@ -1,11 +1,12 @@
 package chat.communication;
 
 import chat.Server;
-import chat.Uid;
-import chat.client.AClient;
 import chat.client.OwnClient;
 import chat.message.MessageContainer;
-import chat.message.model.*;
+import chat.message.model.ConnectMessage;
+import chat.message.model.Header;
+import chat.message.model.RoutingMessageContent;
+import chat.message.model.RoutingTableMessageElement;
 import chat.routing.Routing;
 import chat.routing.RoutingTableElement;
 
@@ -29,7 +30,7 @@ public class Receiver implements Runnable {
                 RoutingTableElement[] elements = new RoutingTableElement[messageElements.size()];
                 AtomicInteger i = new AtomicInteger();
                 messageElements.forEach(roTaMeElement -> {
-                    elements[i.getAndIncrement()] = new RoutingTableElement(roTaMeElement.getDestinationUid(), roTaMeElement.getSenderName(), this._message.getUid(), roTaMeElement.geCostsToDestination(), false);
+                    elements[i.getAndIncrement()] = new RoutingTableElement(roTaMeElement.getDestinationUid(), roTaMeElement.getSenderName(), this._message.getUid(), roTaMeElement.geCostsToDestination());
                 });
                 Routing.getInstance().addTable(this._message.getMessage().getHeader().getUidSender(), elements);
                 break;
@@ -52,17 +53,5 @@ public class Receiver implements Runnable {
                 System.err.println("unknown message type: " + this._message.getMessageType());
                 break;
         }
-    }
-
-    private MessageContainer _createRoutingMessage(Uid uidSender, Uid uidReceiver, AClient client) {
-        ArrayList<RoutingTableMessageElement> elements = new ArrayList<>();
-        // @todo getTable.getTable -> ist kacke
-        Routing.getInstance().getTable().getTable().forEach((destinationUid, routingTableElement) -> {
-            elements.add(new RoutingTableMessageElement(routingTableElement.getDestinationUid(), routingTableElement.getDestinationName(), routingTableElement.getMetric()));
-        });
-        RoutingMessageContent routingContent = new RoutingMessageContent(elements);
-        RoutingMessage routingMessage = new RoutingMessage(routingContent, uidSender, uidReceiver);
-        System.out.println("send routing table: " + uidSender + " -> " + uidReceiver);
-        return new MessageContainer(routingMessage, client);
     }
 }
