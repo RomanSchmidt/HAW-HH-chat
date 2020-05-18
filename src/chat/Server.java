@@ -2,7 +2,6 @@ package chat;
 
 import chat.cli.Cli;
 import chat.client.Client;
-import chat.client.OwnClient;
 import chat.communication.Communicator;
 import chat.message.MessageContainer;
 import chat.routing.Routing;
@@ -61,7 +60,7 @@ public class Server implements Runnable {
     }
 
     public static void disconnect() {
-        Routing.getInstance().getClient(Server._uid).disconnect();
+        Routing.getInstance().getClient(Server.getUid()).disconnect();
     }
 
     /**
@@ -76,9 +75,7 @@ public class Server implements Runnable {
                     System.out.println("client income: " + clientSocket.getRemoteSocketAddress());
                     BufferedReader messageBuffer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                     String jsonString = messageBuffer.lines().collect(Collectors.joining());
-                    Uid uid = new Uid(clientSocket.getInetAddress().getHostAddress(), this._uid.getPort());
-                    OwnClient client = new OwnClient(uid, Server.getName());
-                    MessageContainer message = new MessageContainer(jsonString, client);
+                    MessageContainer message = new MessageContainer(jsonString);
                     Communicator.receive(message);
                 }
             }

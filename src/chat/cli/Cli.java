@@ -89,7 +89,7 @@ public abstract class Cli {
                 Cli._connect(new Uid(ip, port), "");
                 return true;
             case Exit:
-                System.out.println("exiting");
+                System.out.println("exiting: " + Server.getUid());
                 Server.disconnect();
                 return false;
             case Routing:

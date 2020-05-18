@@ -31,7 +31,9 @@ public class Receiver implements Runnable {
                 messageElements.forEach(roTaMeElement -> {
                     elements[i.getAndIncrement()] = new RoutingTableElement(roTaMeElement.getDestinationUid(), roTaMeElement.getSenderName(), this._message.getUid(), roTaMeElement.geCostsToDestination(), false);
                 });
-                Routing.getInstance().addTable((OwnClient)this._message.getClient(), elements);
+                System.out.println("wtf1: " + this._message.getClient().getUid());
+                System.out.println("wtf11: " + this._message.getClient().getUid());
+                Routing.getInstance().addTable((OwnClient) this._message.getClient(), elements);
                 break;
             case chatMessage:
                 System.out.println("got chat message from: " + this._message.getMessage().getHeader().getUidSender());
@@ -39,6 +41,7 @@ public class Receiver implements Runnable {
                 break;
             case disconnect:
                 System.out.println("got disconnect message from: " + this._message.getMessage().getHeader().getUidSender());
+                System.out.println("wtf2: " + this._message.getClient().getUid());
                 Routing.getInstance().removeClient(this._message.getClient());
                 break;
             case connect:

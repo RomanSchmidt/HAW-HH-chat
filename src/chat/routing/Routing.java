@@ -13,7 +13,6 @@ import chat.message.model.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -63,20 +62,23 @@ public class Routing {
     }
 
     public void addClient(AClient client, Uid gateway, int metric, boolean doPopulate) {
-        if (client instanceof OwnClient) {
-            this._ownClientUids.add(client.getUid());
+        if (!this._clientsByUId.containsKey(client.getUid())) {
+            System.out.println("do not know: " + client.getUid());
+            if (client instanceof OwnClient) {
+                this._ownClientUids.add(client.getUid());
+            }
+            if (client instanceof Client) {
+                this._connectedClient = (Client) client;
+            }
+            System.out.println("add client: " + client.getName());
+            this._table.addClient(client, gateway, metric);
+            this._clientsByName.put(client.getName(), client);
+            this._clientsByUId.put(client.getUid(), client);
+            if (!this._clientsByGateWayUid.containsKey(gateway)) {
+                this._clientsByGateWayUid.put(gateway, new ArrayList<>());
+            }
+            this._clientsByGateWayUid.get(gateway).add(client);
         }
-        if (client instanceof Client) {
-            this._connectedClient = (Client) client;
-        }
-        System.out.println("add client: " + client.getName());
-        this._table.addClient(client, gateway, metric);
-        this._clientsByName.put(client.getName(), client);
-        this._clientsByUId.put(client.getUid(), client);
-        if (!this._clientsByGateWayUid.containsKey(gateway)) {
-            this._clientsByGateWayUid.put(gateway, new ArrayList<>());
-        }
-        this._clientsByGateWayUid.get(gateway).add(client);
         if (doPopulate) {
             this._populateChanges(this._clientsByUId.get(Server.getUid()));
         }
@@ -84,28 +86,32 @@ public class Routing {
 
     public void removeClient(AClient client) {
         System.err.println("removing: " + client.getName());
-        if (client instanceof Client) {
-            this._populateDisconnect((Client) client);
-            //Communicator.getExecutor().shutdown();
-            try {
-                Communicator.getExecutor().awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-            } catch (InterruptedException e) {
-                System.out.println("down");
-            }
-            return;
-        }
-        System.err.println("foo: "+Server.getUid());
+
+        System.err.println("foo: " + Server.getUid());
         this._table.removeClient(client.getUid());
         this._clientsByName.remove(client.getName());
         this._clientsByUId.remove(client.getUid());
+        System.out.println("remove this._clientsByUId: " + client.getUid() + " -> " + this._clientsByUId.keySet().toString());
         this._clientsByGateWayUid.remove(client.getUid());
         this._clientsByGateWayUid.forEach((uid, clients) -> {
             clients.removeIf(clientInMap -> {
                 return clientInMap.getUid().equals(client.getUid());
             });
         });
-        this._populateChanges(client);
 
+        if (client instanceof Client) {
+            this._populateDisconnect((Client) client);
+            System.out.println("shot down?");
+            //Communicator.getExecutor().shutdown();
+            //try {
+            //    Communicator.getExecutor().awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            //} catch (InterruptedException e) {
+            //    System.out.println("down");
+            //}
+            //return;
+        } else {
+            this._populateChanges(client);
+        }
     }
 
     private void _populateDisconnect(Client discoClient) {
@@ -121,7 +127,7 @@ public class Routing {
             Communicator.send(new MessageContainer(message, client));
         });
 
-        if(null != this._connectedClient) {
+        if (null != this._connectedClient) {
             DisconnectMessage message = (DisconnectMessage) AMessage.createByType(MessageType.disconnect, discoClient.getUid(), this._connectedClient.getUid(), discoClient.getName(), null);
             System.out.println("populating disconnect1: " + discoClient.getName() + " -> " + this._connectedClient.getUid());
             Communicator.send(new MessageContainer(message, discoClient));
@@ -142,13 +148,14 @@ public class Routing {
         });
         RoutingMessageContent content = new RoutingMessageContent(elements);
 
-        if (null != this._connectedClient && !this._connectedClient.getUid().equals(from.getUid())) {
+        if (null != this._connectedClient && !this._connectedClient.getUid().equals(from.getUid()) && !this._connectedClient.getUid().equals(Server.getUid())) {
             AMessage message = AMessage.createByType(MessageType.routingResponse, Server.getUid(), this._connectedClient.getUid(), Server.getName(), content);
             AClient client = this._clientsByUId.get(this._connectedClient.getUid());
+            System.out.println("equals? " + from.getUid() + " -- " + this._connectedClient.getUid());
             Communicator.send(new MessageContainer(message, client));
         }
         this._ownClientUids.forEach(uid -> {
-            if (!uid.equals(from.getUid())) {
+                        if (!uid.equals(from.getUid())) {
                 AMessage message = AMessage.createByType(MessageType.routingResponse, Server.getUid(), uid, Server.getName(), content);
                 AClient client = this._clientsByUId.get(uid);
                 Communicator.send(new MessageContainer(message, client));
@@ -159,7 +166,7 @@ public class Routing {
     private void _analyzeTable(OwnClient from, RoutingTableElement[] elements) {
         boolean hasChanges = false;
         ArrayList<Uid> handledUids = new ArrayList<>();
-        this.addClient(from, Server.getUid(), 0, false);
+        //this.addClient(from, Server.getUid(), 0, false);
         for (RoutingTableElement foreignElement : elements) {
             if (foreignElement.getDestinationUid().equals(Server.getUid())) {
                 continue;
@@ -182,7 +189,12 @@ public class Routing {
     }
 
     private void _cleanUpTable(Uid uid, ArrayList<Uid> handledUids) {
-        this._clientsByGateWayUid.get(uid).forEach(client -> {
+        var clients = this._clientsByGateWayUid.get(uid);
+        if (clients == null) {
+            return;
+        }
+        System.out.println("cleanup: " + uid);
+        clients.forEach(client -> {
             if (!handledUids.contains(client.getUid())) {
                 this.removeClient(client);
             }
@@ -207,6 +219,7 @@ public class Routing {
     }
 
     public AClient getClient(Uid clientUidSearch) {
+        System.out.println("this._clientsByUId: " + clientUidSearch + " -> " + this._clientsByUId.keySet().toString());
         return this._clientsByUId.get(clientUidSearch);
     }
 
