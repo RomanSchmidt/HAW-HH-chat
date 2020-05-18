@@ -9,7 +9,7 @@ import java.util.HashMap;
  * handle the table
  */
 public class RoutingTable {
-    private final HashMap<String, RoutingTableElement> _table = new HashMap<>();
+    private final HashMap<Uid, RoutingTableElement> _table = new HashMap<>();
 
     RoutingTable() {
     }
@@ -23,7 +23,7 @@ public class RoutingTable {
                 metric,
                 true
         );
-        this._table.put(client.getUid().toString(), element);
+        this._table.put(client.getUid(), element);
     }
 
     public void removeClient(AClient client) {
@@ -31,18 +31,18 @@ public class RoutingTable {
     }
 
     public void removeClient(Uid destinationUid) {
-        this._table.remove(destinationUid.toString());
+        this._table.remove(destinationUid);
     }
 
     /**
      * get a clone of the table
      */
     @SuppressWarnings("unchecked")
-    public HashMap<String, RoutingTableElement> getTable() {
-        return (HashMap<String, RoutingTableElement>) this._table.clone();
+    public HashMap<Uid, RoutingTableElement> getTable() {
+        return (HashMap<Uid, RoutingTableElement>) this._table.clone();
     }
 
     public RoutingTableElement getRoutingElementByUid(Uid uid) {
-        return this._table.get(uid.toString());
+        return this._table.get(uid);
     }
 }

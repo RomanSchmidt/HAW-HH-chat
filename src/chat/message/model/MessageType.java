@@ -15,7 +15,7 @@ public enum MessageType {
     public static MessageType mapFromCode(int messageTypeSearch) {
         for (int i = 0; i < MessageType.values().length; ++i) {
             MessageType messageType = MessageType.values()[i];
-            if (messageType.getName() == messageTypeSearch) {
+            if (messageType.getCode() == messageTypeSearch) {
                 return messageType;
             }
         }
