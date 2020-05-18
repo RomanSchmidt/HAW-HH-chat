@@ -151,7 +151,7 @@ public abstract class Cli {
             Cli._printAllCommands();
         } else {
             ChatMessageContent content = new ChatMessageContent(chatMessage);
-            ChatMessage message = (ChatMessage) AMessage.createByType(MessageType.chatMessage, Server.getUid(), Cli._clientToChatWith.getUid(), Cli._clientToChatWith.getName(), content);
+            ChatMessage message = (ChatMessage) AMessage.createByType(MessageType.chatMessage, Server.getUid(), Cli._clientToChatWith.getUid(), Server.getName(), content);
             System.out.println("chat to: " + message.getSenderName());
             MessageContainer container = new MessageContainer(message, Cli._clientToChatWith);
             Cli._clientToChatWith.sendMessage(container);
