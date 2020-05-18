@@ -56,7 +56,7 @@ public class Routing {
      * remove all clients from those servers that are not in the list any more
      * remove all clients that are not in the list any more
      */
-    public void addTable(OwnClient from, RoutingTableElement[] elements) {
+    public void addTable(Uid from, RoutingTableElement[] elements) {
         this._analyzeTable(from, elements);
     }
 
@@ -68,13 +68,15 @@ public class Routing {
             this._table.addClient(client, gateway, metric);
             this._clientsByName.put(client.getName(), client);
             this._clientsByUId.put(client.getUid(), client);
-            if (!this._clientsByGateWayUid.containsKey(gateway)) {
-                this._clientsByGateWayUid.put(gateway, new ArrayList<>());
+            if (!client.getUid().equals(gateway)) {
+                if (!this._clientsByGateWayUid.containsKey(gateway)) {
+                    this._clientsByGateWayUid.put(gateway, new ArrayList<>());
+                }
+                this._clientsByGateWayUid.get(gateway).add(client);
             }
-            this._clientsByGateWayUid.get(gateway).add(client);
         }
         if (doPopulate) {
-            this._populateChanges(this._clientsByUId.get(Server.getUid()));
+            this._populateChanges(Server.getUid());
         }
     }
 
@@ -102,7 +104,7 @@ public class Routing {
             //}
             //return;
         } else {
-            this._populateChanges(client);
+            this._populateChanges(client.getUid());
         }
     }
 
@@ -124,7 +126,7 @@ public class Routing {
         });
     }
 
-    private void _populateChanges(AClient from) {
+    private void _populateChanges(Uid fromUid) {
         System.out.println("populating table");
         ArrayList<RoutingTableMessageElement> elements = new ArrayList<>();
         this._table.getTable().forEach((uid, routingTableElement) -> {
@@ -133,7 +135,7 @@ public class Routing {
         RoutingMessageContent content = new RoutingMessageContent(elements);
 
         this._ownClientUids.forEach(uid -> {
-            if (!uid.equals(from.getUid())) {
+            if (!uid.equals(fromUid)) {
                 AMessage message = AMessage.createByType(MessageType.routingResponse, Server.getUid(), uid, Server.getName(), content);
                 AClient client = this._clientsByUId.get(uid);
                 Communicator.send(new MessageContainer(message, client));
@@ -141,10 +143,9 @@ public class Routing {
         });
     }
 
-    private void _analyzeTable(OwnClient from, RoutingTableElement[] elements) {
+    private void _analyzeTable(Uid fromUid, RoutingTableElement[] elements) {
         boolean hasChanges = false;
         ArrayList<Uid> handledUids = new ArrayList<>();
-        //this.addClient(from, Server.getUid(), 0, false);
         for (RoutingTableElement foreignElement : elements) {
             if (foreignElement.getDestinationUid().equals(Server.getUid())) {
                 continue;
@@ -156,7 +157,7 @@ public class Routing {
             RoutingTableElement ownElement = this._table.getRoutingElementByUid(foreignElement.getDestinationUid());
             if (ownElement == null || foreignElement.getMetric() < ownElement.getMetric()) {
                 AClient client;
-                if (foreignElement.getDestinationUid().equals(from.getUid())) {
+                if (foreignElement.getDestinationUid().equals(fromUid)) {
                     client = new OwnClient(foreignElement.getDestinationUid(), foreignElement.getDestinationName());
                 } else {
                     client = new ForeignClient(foreignElement.getDestinationUid(), foreignElement.getDestinationName());
@@ -165,9 +166,9 @@ public class Routing {
                 hasChanges = true;
             }
         }
-        this._cleanUpTable(from.getUid(), handledUids);
+        this._cleanUpTable(fromUid, handledUids);
         if (hasChanges) {
-            this._populateChanges(from);
+            this._populateChanges(fromUid);
         }
     }
 

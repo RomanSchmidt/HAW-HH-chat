@@ -31,7 +31,7 @@ public class Receiver implements Runnable {
                 messageElements.forEach(roTaMeElement -> {
                     elements[i.getAndIncrement()] = new RoutingTableElement(roTaMeElement.getDestinationUid(), roTaMeElement.getSenderName(), this._message.getUid(), roTaMeElement.geCostsToDestination(), false);
                 });
-                Routing.getInstance().addTable((OwnClient) this._message.getClient(), elements);
+                Routing.getInstance().addTable(this._message.getMessage().getHeader().getUidSender(), elements);
                 break;
             case chatMessage:
                 System.out.println("got chat message from: " + this._message.getMessage().getHeader().getUidSender());
