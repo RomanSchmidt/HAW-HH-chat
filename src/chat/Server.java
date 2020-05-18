@@ -1,9 +1,10 @@
 package chat;
 
+import chat.cli.Cli;
 import chat.client.Client;
-import chat.client.ForeignClient;
+import chat.client.OwnClient;
+import chat.communication.Communicator;
 import chat.message.MessageContainer;
-import chat.message.MessageHandler;
 import chat.routing.Routing;
 
 import java.io.BufferedReader;
@@ -23,13 +24,12 @@ import java.util.stream.Collectors;
 public class Server implements Runnable {
     private static Uid _uid;
     private static String _name;
-    private final Client _client;
 
-    Server(Integer port, String name) {
-        Server._uid = new Uid(this._getOwnIp(), port);
-        Server._name = name;
-        this._client = new Client(Server._uid, name);
-        Routing.getInstance().addClient(this._client, Server.getUid(), 0);
+    Server() {
+        Server._name = Cli.getParamString("name");
+        Server.getUidFromCli();
+        Client client = new Client(Server._uid, Server._name);
+        Routing.getInstance().addClient(client, Server.getUid(), 0, false);
     }
 
     public static String getName() {
@@ -40,15 +40,17 @@ public class Server implements Runnable {
         return Server._uid;
     }
 
+    public static void getUidFromCli() {
+        Server._uid = new Uid(Server._getOwnIp(), Cli.getParamInt("port"));
+    }
+
     /**
      * get local ip
      */
-    private String _getOwnIp() {
+    private static String _getOwnIp() {
         try {
             InetAddress inetAddress = InetAddress.getLocalHost();
             System.out.println("IP Address:- " + inetAddress.getHostAddress());
-            // could be used for name
-            System.out.println("Host Name:- " + inetAddress.getHostName());
             return inetAddress.getHostAddress();
         } catch (UnknownHostException e) {
             System.err.println("not able to resolve local ip: " + e.getMessage());
@@ -56,6 +58,10 @@ public class Server implements Runnable {
             System.exit(1);
         }
         return null;
+    }
+
+    public static void disconnect() {
+        Routing.getInstance().getClient(Server._uid).disconnect();
     }
 
     /**
@@ -66,19 +72,23 @@ public class Server implements Runnable {
         try {
             ServerSocket socket = new ServerSocket(this._uid.getPort());
             while (true) {
-                System.out.println("server waits for client");
                 try (Socket clientSocket = socket.accept()) {
-                    System.out.println("client accept: " + clientSocket.getRemoteSocketAddress());
+                    System.out.println("client income: " + clientSocket.getRemoteSocketAddress());
                     BufferedReader messageBuffer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                     String jsonString = messageBuffer.lines().collect(Collectors.joining());
-                    Uid uid = new Uid(clientSocket.getInetAddress().getHostAddress(), clientSocket.getPort());
-                    ForeignClient client = new ForeignClient(uid, Server.getName());
+                    Uid uid = new Uid(clientSocket.getInetAddress().getHostAddress(), this._uid.getPort());
+                    OwnClient client = new OwnClient(uid, Server.getName());
                     MessageContainer message = new MessageContainer(jsonString, client);
-                    MessageHandler.receive(message);
+                    Communicator.receive(message);
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("connection invalid");
+            Server.getUidFromCli();
         }
+    }
+
+    public static void quit() throws InterruptedException {
+        throw new InterruptedException();
     }
 }

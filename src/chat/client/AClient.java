@@ -1,6 +1,9 @@
 package chat.client;
 
 import chat.Uid;
+import chat.communication.Communicator;
+import chat.message.MessageContainer;
+import chat.routing.Routing;
 
 public abstract class AClient implements Actor {
     protected final String _name;
@@ -19,10 +22,12 @@ public abstract class AClient implements Actor {
         return this._name;
     }
 
-    /**
-     * @todo send disco message
-     */
+    public void sendMessage(MessageContainer message) {
+        System.out.println("sending message to server: " + message.getMessage().getHeader().getMessageType());
+        Communicator.send(message);
+    }
+
     public void disconnect() {
-        System.err.println("disconnect not implemented in foreign client");
+        Routing.getInstance().removeClient(this);
     }
 }

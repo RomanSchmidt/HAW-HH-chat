@@ -19,7 +19,7 @@ public abstract class AMessage {
             case disconnect:
                 return new DisconnectMessage(uidSender, uidReceiver);
             case chatMessage:
-                return new ChatMessage(content, uidSender, uidReceiver);
+                return new ChatMessage(content, uidSender, uidReceiver, senderName);
             case routingResponse:
                 return new RoutingMessage(content, uidSender, uidReceiver);
         }
@@ -32,5 +32,9 @@ public abstract class AMessage {
 
     public AContent getContent() {
         return this.content;
+    }
+
+    public String getSenderName() {
+        return this.senderName;
     }
 }

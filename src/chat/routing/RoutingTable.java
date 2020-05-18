@@ -9,27 +9,13 @@ import java.util.HashMap;
  * handle the table
  */
 public class RoutingTable {
-    private final HashMap<Uid, RoutingTableElement> _table = new HashMap<>();
+    private final HashMap<String, RoutingTableElement> _table = new HashMap<>();
 
     RoutingTable() {
     }
 
-    /**
-     * @todo implement
-     * get own instance and remove from routing table
-     */
-    public void disconnect(Uid uid) {
-        System.err.println("implement disconnect");
-    }
-
-    /**
-     * @todo implement
-     */
-    public void analyzeForeignTable(RoutingTable table) {
-        System.err.println("implement analyzeForeignTable");
-    }
-
     public void addClient(AClient client, Uid gateWayUid, int metric) {
+        this.removeClient(client.getUid());
         RoutingTableElement element = new RoutingTableElement(
                 client.getUid(),
                 client.getName(),
@@ -37,22 +23,26 @@ public class RoutingTable {
                 metric,
                 true
         );
-        this._table.put(client.getUid(), element);
+        this._table.put(client.getUid().toString(), element);
     }
 
-    /**
-     * @todo implement
-     * update table
-     */
     public void removeClient(AClient client) {
-        System.err.println("implement removeOwnClient");
+        this.removeClient(client.getUid());
+    }
+
+    public void removeClient(Uid destinationUid) {
+        this._table.remove(destinationUid.toString());
     }
 
     /**
      * get a clone of the table
      */
     @SuppressWarnings("unchecked")
-    public HashMap<Uid, RoutingTableElement> getTable() {
-        return (HashMap<Uid, RoutingTableElement>) this._table.clone();
+    public HashMap<String, RoutingTableElement> getTable() {
+        return (HashMap<String, RoutingTableElement>) this._table.clone();
+    }
+
+    public RoutingTableElement getRoutingElementByUid(Uid uid) {
+        return this._table.get(uid.toString());
     }
 }

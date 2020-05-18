@@ -8,8 +8,4 @@ public class ConnectMessage extends AMessage {
         super(new Header(MessageType.connect, uidSender, uidReceiver), null);
         this.senderName = senderName;
     }
-
-    public String getSenderName() {
-        return this.senderName;
-    }
 }

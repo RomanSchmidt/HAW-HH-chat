@@ -1,15 +1,16 @@
-package chat.communicator;
+package chat.communication;
 
 import chat.Server;
 import chat.Uid;
 import chat.client.AClient;
 import chat.client.OwnClient;
 import chat.message.MessageContainer;
-import chat.message.MessageHandler;
 import chat.message.model.*;
 import chat.routing.Routing;
+import chat.routing.RoutingTableElement;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Receiver implements Runnable {
 
@@ -21,11 +22,16 @@ public class Receiver implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("analyse message");
-
         switch (this._message.getMessageType()) {
             case routingResponse:
-                System.err.println("implement receive routingResponse");
+                System.out.println("got routing from: " + this._message.getMessage().getHeader().getUidSender());
+                ArrayList<RoutingTableMessageElement> messageElements = ((RoutingMessageContent) this._message.getMessage().getContent()).getRoutingTable();
+                RoutingTableElement[] elements = new RoutingTableElement[messageElements.size()];
+                AtomicInteger i = new AtomicInteger();
+                messageElements.forEach(roTaMeElement -> {
+                    elements[i.getAndIncrement()] = new RoutingTableElement(roTaMeElement.getDestinationUid(), roTaMeElement.getSenderName(), this._message.getUid(), roTaMeElement.geCostsToDestination(), false);
+                });
+                Routing.getInstance().addTable((OwnClient)this._message.getClient(), elements);
                 break;
             case chatMessage:
                 System.out.println("got chat message from: " + this._message.getMessage().getHeader().getUidSender());
@@ -40,22 +46,19 @@ public class Receiver implements Runnable {
                 ConnectMessage message = (ConnectMessage) this._message.getMessage();
                 System.out.println("got connect message from: " + header.getUidSender() + " (" + message.getSenderName() + ")");
                 OwnClient client = new OwnClient(header.getUidSender(), message.getSenderName());
-                Routing.getInstance().addClient(client, Server.getUid(), 1);
-                MessageHandler.send(this._createRoutingMessage(MessageContainer.getOwnUid(), header.getUidSender(), client));
+                Routing.getInstance().addClient(client, Server.getUid(), 1, true);
                 break;
             default:
                 System.err.println("unknown message type: " + this._message.getMessageType());
                 break;
         }
-
-        System.out.println("analyse message end");
     }
 
     private MessageContainer _createRoutingMessage(Uid uidSender, Uid uidReceiver, AClient client) {
         ArrayList<RoutingTableMessageElement> elements = new ArrayList<>();
         // @todo getTable.getTable -> ist kacke
         Routing.getInstance().getTable().getTable().forEach((destinationUid, routingTableElement) -> {
-            elements.add(new RoutingTableMessageElement(destinationUid, routingTableElement.getDestinationName(), routingTableElement.getMetric()));
+            elements.add(new RoutingTableMessageElement(routingTableElement.getDestinationUid(), routingTableElement.getDestinationName(), routingTableElement.getMetric()));
         });
         RoutingMessageContent routingContent = new RoutingMessageContent(elements);
         RoutingMessage routingMessage = new RoutingMessage(routingContent, uidSender, uidReceiver);

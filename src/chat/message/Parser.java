@@ -16,11 +16,8 @@ public abstract class Parser {
     private static final Gson _gSon = new Gson();
 
     public static AMessage transfer(String jsonString) {
-        System.out.println("start parse: " + jsonString);
-
         if (!Parser.isJsonValid(jsonString)) {
             System.err.println("Not valid json: " + jsonString);
-            new Error().printStackTrace();
             return null;
         }
 
@@ -84,10 +81,7 @@ public abstract class Parser {
     }
 
     public static String transfer(AMessage message) {
-        System.out.println("start convert: " + message.getHeader().getMessageType());
-        String jsonString = Parser._gSon.toJson(message, AMessage.class);
-        System.out.println("parse convert: " + jsonString);
-        return jsonString;
+        return Parser._gSon.toJson(message, AMessage.class);
     }
 
     private static boolean isJsonValid(final String json) {

@@ -9,7 +9,7 @@ public class RoutingTableElement {
     private int _metric = 0;
     private boolean _recentlyChanged;
 
-    RoutingTableElement(Uid destinationUid, String destinationName, Uid nextGateWayUid, int metric, boolean recentlyChanged) {
+    public RoutingTableElement(Uid destinationUid, String destinationName, Uid nextGateWayUid, int metric, boolean recentlyChanged) {
         this._destinationUid = destinationUid;
         this._destinationName = destinationName;
         this._nextGateWayUid = nextGateWayUid;

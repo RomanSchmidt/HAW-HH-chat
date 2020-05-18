@@ -1,4 +1,4 @@
-package chat.communicator;
+package chat.communication;
 
 import chat.message.MessageContainer;
 import chat.routing.Routing;
@@ -22,12 +22,11 @@ public class Sender implements Runnable {
         try (Socket socket = new Socket(this._message.getClient().getUid().getIp(), this._message.getClient().getUid().getPort())) {
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
             out.println(this._message.getJsonString());
-            System.out.println("send success");
         } catch (UnknownHostException e) {
             e.printStackTrace();
             Routing.getInstance().removeClient(this._message.getClient());
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Connection error: " + e.getMessage());
         }
     }
 }
