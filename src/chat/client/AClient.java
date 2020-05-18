@@ -27,7 +27,7 @@ public abstract class AClient implements Actor {
         Communicator.send(message);
     }
 
-    public void disconnect() {
-        Routing.getInstance().removeClient(this);
+    public void disconnect(boolean populate) {
+        Routing.getInstance().removeClient(this, populate);
     }
 }

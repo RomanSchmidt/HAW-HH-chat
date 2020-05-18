@@ -48,14 +48,6 @@ public class Routing {
         return clients;
     }
 
-    /**
-     * @todo implement
-     * get a new table from other server, analyze and populate to all others, but not to the same Server you got it from
-     * add foreign clients to the known clients list
-     * add from to known servers if its not there
-     * remove all clients from those servers that are not in the list any more
-     * remove all clients that are not in the list any more
-     */
     public void addTable(Uid from, RoutingTableElement[] elements) {
         this._analyzeTable(from, elements);
     }
@@ -80,11 +72,15 @@ public class Routing {
         }
     }
 
-    public void removeClient(AClient client) {
-        System.out.println("removing: " + client.getName());
+    public void removeClient(AClient client, boolean populate) {
 
-        this._table.removeClient(client.getUid());
-        this._clientsByName.remove(client.getName());
+        // @todo client to write to should be null if it is this one!
+        RoutingTableElement element = this._table.removeClient(client.getUid());
+        if(null == element || null == element.getDestinationName()) {
+            return;
+        }
+        System.out.println("removing: " + client.getUid());
+        this._clientsByName.remove(element.getDestinationName());
         this._clientsByUId.remove(client.getUid());
         this._clientsByGateWayUid.remove(client.getUid());
         this._clientsByGateWayUid.forEach((uid, clients) -> {
@@ -103,7 +99,7 @@ public class Routing {
             //    System.out.println("down");
             //}
             //return;
-        } else {
+        } else if (populate) {
             this._populateChanges(client.getUid());
         }
     }
@@ -111,18 +107,16 @@ public class Routing {
     private void _populateDisconnect(Client discoClient) {
         System.out.println("populating disconnect");
 
-        this._clientsByName.forEach((name, client) -> {
-            if (client instanceof ForeignClient || client.getUid().equals(Server.getUid())) {
+        this._ownClientUids.forEach(uid -> {
+            if (uid.equals(Server.getUid())) {
                 return;
             }
-            System.out.println("send message");
-            DisconnectMessage message = (DisconnectMessage) AMessage.createByType(MessageType.disconnect, discoClient.getUid(), client.getUid(), client.getName(), null);
-            Communicator.send(new MessageContainer(message, client));
-        });
-
-        this._ownClientUids.forEach(uid -> {
+            AClient client = this._clientsByUId.get(uid);
+            if (client == null) {
+                return;
+            }
             DisconnectMessage message = (DisconnectMessage) AMessage.createByType(MessageType.disconnect, discoClient.getUid(), uid, discoClient.getName(), null);
-            Communicator.send(new MessageContainer(message, discoClient));
+            Communicator.send(new MessageContainer(message, client));
         });
     }
 
@@ -178,10 +172,15 @@ public class Routing {
             return;
         }
         System.out.println("cleanup: " + uid);
+        System.out.println(handledUids.toString());
+        ArrayList<AClient> clientsToDelete = new ArrayList<>();
         clients.forEach(client -> {
             if (!handledUids.contains(client.getUid())) {
-                this.removeClient(client);
+                clientsToDelete.add(client);
             }
+        });
+        clientsToDelete.forEach(client -> {
+            this.removeClient(client, false);
         });
     }
 

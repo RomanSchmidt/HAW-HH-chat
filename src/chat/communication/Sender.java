@@ -24,7 +24,7 @@ public class Sender implements Runnable {
             out.println(this._message.getJsonString());
         } catch (UnknownHostException e) {
             e.printStackTrace();
-            Routing.getInstance().removeClient(this._message.getClient());
+            Routing.getInstance().removeClient(this._message.getClient(), true);
         } catch (IOException e) {
             System.err.println("Connection error: " + e.getMessage());
         }

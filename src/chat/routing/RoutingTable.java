@@ -30,8 +30,8 @@ public class RoutingTable {
         this.removeClient(client.getUid());
     }
 
-    public void removeClient(Uid destinationUid) {
-        this._table.remove(destinationUid);
+    public RoutingTableElement removeClient(Uid destinationUid) {
+        return this._table.remove(destinationUid);
     }
 
     /**

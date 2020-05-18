@@ -60,7 +60,7 @@ public class Server implements Runnable {
     }
 
     public static void disconnect() {
-        Routing.getInstance().getClient(Server.getUid()).disconnect();
+        Routing.getInstance().getClient(Server.getUid()).disconnect(false);
     }
 
     /**

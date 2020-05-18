@@ -39,7 +39,7 @@ public class Receiver implements Runnable {
                 break;
             case disconnect:
                 System.out.println("got disconnect message from: " + this._message.getMessage().getHeader().getUidSender());
-                Routing.getInstance().removeClient(this._message.getClient());
+                Routing.getInstance().removeClient(this._message.getClient(), true);
                 break;
             case connect:
                 Header header = this._message.getMessage().getHeader();

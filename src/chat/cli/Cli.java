@@ -86,7 +86,7 @@ public abstract class Cli {
             case Connect:
                 String ip = Cli.getParamString("ip");
                 Integer port = Cli.getParamInt("port");
-                Cli._connect(new Uid(ip, port), "");
+                Cli._connect(new Uid(ip, port));
                 return true;
             case Exit:
                 System.out.println("exiting: " + Server.getUid());
@@ -158,11 +158,11 @@ public abstract class Cli {
         }
     }
 
-    private static void _connect(Uid uid, String name) {
+    private static void _connect(Uid uid) {
         if (null != Cli._client) {
-            Cli._client.disconnect();
+            Cli._client.disconnect(false);
         }
-        Cli._client = Client.connect(Server.getUid(), uid, name);
+        Cli._client = Client.connect(Server.getUid(), uid, "");
     }
 
     public static String getParamString(String name) {
