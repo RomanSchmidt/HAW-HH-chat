@@ -38,13 +38,27 @@ public abstract class Parser {
                     if (null != contentJSONEle) {
                         contentJSON = contentJSONEle.getAsJsonObject();
                     }
+                    String userName = null;
+
+                    if(null != contentJSON) {
+                        JsonElement userNameJson = contentJSON.get("userName");
+                        if (null != userNameJson) {
+                            userName = userNameJson.getAsString();
+                        }
+                    }
                     AContent content = null;
                     switch (messageType) {
+                        case connect:
+                            if (null == contentJSON) {
+                                break;
+                            }
+                            content = new ConnectMessageContent(userName);
+                            break;
                         case chatMessage:
                             if (null == contentJSON) {
                                 break;
                             }
-                            content = new ChatMessageContent(contentJSON.get("message").getAsString());
+                            content = new ChatMessageContent(contentJSON.get("message").getAsString(), userName);
                             break;
                         case routingResponse:
                             if (null == contentJSON) {
@@ -56,21 +70,15 @@ public abstract class Parser {
                                 JsonObject tableElementJson = routingTableJson.get(j).getAsJsonObject();
                                 JsonObject destinationUidJson = tableElementJson.get("destinationUid").getAsJsonObject();
                                 Uid destinationUid = new Uid(destinationUidJson.get("ip").getAsString(), destinationUidJson.get("port").getAsInt());
-                                table.add(new RoutingTableMessageElement(destinationUid, tableElementJson.get("senderName").getAsString(), tableElementJson.get("costsToDestination").getAsInt()));
+                                table.add(new RoutingTableMessageElement(destinationUid, tableElementJson.get("userName").getAsString(), tableElementJson.get("costsToDestination").getAsInt()));
                             }
                             content = new RoutingMessageContent(table);
                             break;
-                    }
-                    String senderName = null;
-                    JsonElement senderNameJson = jObject.get("senderName");
-                    if (null != senderNameJson) {
-                        senderName = senderNameJson.getAsString();
                     }
                     return AMessage.createByType(
                             messageType,
                             uidSender,
                             uidReceiver,
-                            senderName,
                             content
                     );
                 }

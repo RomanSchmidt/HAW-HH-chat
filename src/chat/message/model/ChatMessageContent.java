@@ -3,7 +3,8 @@ package chat.message.model;
 public class ChatMessageContent extends AContent {
     private final String message;
 
-    public ChatMessageContent(String message) {
+    public ChatMessageContent(String message, String userName) {
+        super(userName);
         this.message = message;
     }
 

@@ -21,7 +21,7 @@ type Header = {
 // just for routing requests
 type RoutingTableElement = {
     destinationUid: Uid;
-    senderName: String; // länge = 3-20
+    userName: String; // länge = 3-20
     costsToDestination: number; // Anzahl der hops / 0 bei eigener ip
 }
 
@@ -47,7 +47,7 @@ type Connect = {
     header: Header & {
         type: MessageType.connect;
     };
-    senderName: String; // länge = 3-20
+    userName: String; // länge = 3-20
 }
 
 type DisconnectMessage = {

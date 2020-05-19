@@ -3,6 +3,7 @@ package chat.message;
 import chat.Uid;
 import chat.client.AClient;
 import chat.client.OwnClient;
+import chat.message.model.AContent;
 import chat.message.model.AMessage;
 import chat.message.model.MessageType;
 
@@ -29,7 +30,12 @@ public class MessageContainer {
     public MessageContainer(String jsonString) {
         this._message = Parser.transfer(jsonString);
         this._messageType = MessageType.mapFromCode(this._message.getHeader().getType());
-        String name = this._message.getSenderName();
+        String name = "";
+        AContent content = this._message.getContent();
+        System.out.println("FOO: "+content);
+        if(null != content) {
+            name = content.getUserName();
+        }
         this._client = new OwnClient(this._message.getHeader().getUidSender(), name);
         this._jsonString = jsonString;
     }

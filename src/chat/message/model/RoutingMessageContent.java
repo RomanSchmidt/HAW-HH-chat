@@ -6,6 +6,7 @@ public class RoutingMessageContent extends AContent {
     private final ArrayList<RoutingTableMessageElement> routingTable;
 
     public RoutingMessageContent(ArrayList<RoutingTableMessageElement> elements) {
+        super("");
         this.routingTable = elements;
     }
 

@@ -4,12 +4,12 @@ import chat.Uid;
 
 public class RoutingTableMessageElement {
     private final Uid destinationUid;
-    private final String senderName;
+    private final String userName;
     private final Integer costsToDestination;
 
-    public RoutingTableMessageElement(Uid destinationUid, String senderName, Integer costsToDestination) {
+    public RoutingTableMessageElement(Uid destinationUid, String userName, Integer costsToDestination) {
         this.destinationUid = destinationUid;
-        this.senderName = senderName;
+        this.userName = userName;
         this.costsToDestination = costsToDestination;
     }
 
@@ -17,8 +17,8 @@ public class RoutingTableMessageElement {
         return this.destinationUid;
     }
 
-    public String getSenderName() {
-        return this.senderName;
+    public String getUserName() {
+        return this.userName;
     }
 
     public Integer geCostsToDestination() {

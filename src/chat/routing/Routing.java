@@ -141,7 +141,7 @@ public class Routing {
             if (client == null) {
                 return;
             }
-            DisconnectMessage message = (DisconnectMessage) AMessage.createByType(MessageType.disconnect, discoClient.getUid(), uid, discoClient.getName(), null);
+            DisconnectMessage message = (DisconnectMessage) AMessage.createByType(MessageType.disconnect, discoClient.getUid(), uid, null);
             Communicator.send(new MessageContainer(message, client));
         });
     }
@@ -156,7 +156,7 @@ public class Routing {
 
         this._ownClientUids.forEach(uid -> {
             if (!uid.equals(fromUid)) {
-                AMessage message = AMessage.createByType(MessageType.routingResponse, Server.getUid(), uid, Server.getName(), content);
+                AMessage message = AMessage.createByType(MessageType.routingResponse, Server.getUid(), uid, content);
                 AClient client = this._clientsByUId.get(uid);
                 Communicator.send(new MessageContainer(message, client));
             }

@@ -5,23 +5,22 @@ import chat.Uid;
 public abstract class AMessage {
     private final Header header;
     private final AContent content;
-    protected String senderName;
 
     protected AMessage(Header header, AContent content) {
         this.header = header;
         this.content = content;
     }
 
-    public static AMessage createByType(MessageType messageType, Uid uidSender, Uid uidReceiver, String senderName, AContent content) {
+    public static AMessage createByType(MessageType messageType, Uid uidSender, Uid uidReceiver, AContent content) {
         switch (messageType) {
             case connect:
-                return new ConnectMessage(uidSender, uidReceiver, senderName);
+                return new ConnectMessage(uidSender, uidReceiver, (ConnectMessageContent) content);
             case disconnect:
                 return new DisconnectMessage(uidSender, uidReceiver);
             case chatMessage:
-                return new ChatMessage(content, uidSender, uidReceiver, senderName);
+                return new ChatMessage((ChatMessageContent) content, uidSender, uidReceiver);
             case routingResponse:
-                return new RoutingMessage(content, uidSender, uidReceiver);
+                return new RoutingMessage((RoutingMessageContent) content, uidSender, uidReceiver);
         }
         return null;
     }
@@ -32,9 +31,5 @@ public abstract class AMessage {
 
     public AContent getContent() {
         return this.content;
-    }
-
-    public String getSenderName() {
-        return this.senderName;
     }
 }

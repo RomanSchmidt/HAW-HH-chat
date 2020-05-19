@@ -3,10 +3,7 @@ package chat.communication;
 import chat.Server;
 import chat.client.OwnClient;
 import chat.message.MessageContainer;
-import chat.message.model.ConnectMessage;
-import chat.message.model.Header;
-import chat.message.model.RoutingMessageContent;
-import chat.message.model.RoutingTableMessageElement;
+import chat.message.model.*;
 import chat.routing.Routing;
 import chat.routing.RoutingTableElement;
 
@@ -30,7 +27,7 @@ public class Receiver implements Runnable {
                 RoutingTableElement[] elements = new RoutingTableElement[messageElements.size()];
                 AtomicInteger i = new AtomicInteger();
                 messageElements.forEach(roTaMeElement -> {
-                    elements[i.getAndIncrement()] = new RoutingTableElement(roTaMeElement.getDestinationUid(), roTaMeElement.getSenderName(), this._message.getUid(), roTaMeElement.geCostsToDestination());
+                    elements[i.getAndIncrement()] = new RoutingTableElement(roTaMeElement.getDestinationUid(), roTaMeElement.getUserName(), this._message.getUid(), roTaMeElement.geCostsToDestination());
                 });
                 Routing.getInstance().addTable(this._message.getMessage().getHeader().getUidSender(), elements);
                 break;
@@ -45,8 +42,13 @@ public class Receiver implements Runnable {
             case connect:
                 Header header = this._message.getMessage().getHeader();
                 ConnectMessage message = (ConnectMessage) this._message.getMessage();
-                System.out.println("got connect message from: " + header.getUidSender() + " (" + message.getSenderName() + ")");
-                OwnClient client = new OwnClient(header.getUidSender(), message.getSenderName());
+                ConnectMessageContent content = (ConnectMessageContent) message.getContent();
+                String name = "";
+                if(null != content) {
+                    name = content.getUserName();
+                }
+                System.out.println("got connect message from: " + header.getUidSender() + " (" + name + ")");
+                OwnClient client = new OwnClient(header.getUidSender(), name);
                 Routing.getInstance().addClient(client, Server.getUid(), 1, true);
                 break;
             default:
