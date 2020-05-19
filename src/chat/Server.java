@@ -63,6 +63,10 @@ public class Server implements Runnable {
         Routing.getInstance().getClient(Server.getUid()).disconnect(false);
     }
 
+    public static void quit() throws InterruptedException {
+        throw new InterruptedException();
+    }
+
     /**
      * start server and listen on a specific port
      */
@@ -74,6 +78,7 @@ public class Server implements Runnable {
                 try (Socket clientSocket = socket.accept()) {
                     BufferedReader messageBuffer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                     String jsonString = messageBuffer.lines().collect(Collectors.joining());
+                    System.out.println("got jsonString: " + jsonString);
                     MessageContainer message = new MessageContainer(jsonString);
                     Communicator.receive(message);
                 }
@@ -82,9 +87,5 @@ public class Server implements Runnable {
             System.err.println("connection invalid");
             Server.getUidFromCli();
         }
-    }
-
-    public static void quit() throws InterruptedException {
-        throw new InterruptedException();
     }
 }

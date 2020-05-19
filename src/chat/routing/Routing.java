@@ -222,4 +222,12 @@ public class Routing {
             receiverClient.sendMessage(messageContainer);
         }
     }
+
+    public String getNameOfUid(Uid uidSender) {
+        AClient client = this._clientsByUId.get(uidSender);
+        if(client == null) {
+            return "";
+        }
+        return client.getName();
+    }
 }

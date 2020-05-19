@@ -58,7 +58,7 @@ public abstract class Parser {
                             if (null == contentJSON) {
                                 break;
                             }
-                            content = new ChatMessageContent(contentJSON.get("message").getAsString(), userName);
+                            content = new ChatMessageContent(contentJSON.get("message").getAsString());
                             break;
                         case routingResponse:
                             if (null == contentJSON) {

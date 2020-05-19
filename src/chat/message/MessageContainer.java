@@ -32,7 +32,6 @@ public class MessageContainer {
         this._messageType = MessageType.mapFromCode(this._message.getHeader().getType());
         String name = "";
         AContent content = this._message.getContent();
-        System.out.println("FOO: "+content);
         if(null != content) {
             name = content.getUserName();
         }

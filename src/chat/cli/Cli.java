@@ -151,7 +151,7 @@ public abstract class Cli {
             System.out.println(ANSI_RED + "chose a user before." + ANSI_RESET);
             Cli._printAllCommands();
         } else {
-            ChatMessageContent content = new ChatMessageContent(chatMessage, Server.getName());
+            ChatMessageContent content = new ChatMessageContent(chatMessage);
             ChatMessage message = (ChatMessage) AMessage.createByType(MessageType.chatMessage, Server.getUid(), Cli._clientToChatWith.getUid(), content);
             System.out.println("chat to: " + content.getUserName());
             MessageContainer container = new MessageContainer(message, Cli._clientToChatWith);
@@ -200,7 +200,8 @@ public abstract class Cli {
     public static void printChatMessage(MessageContainer messageContainer) {
         ChatMessage message = (ChatMessage) messageContainer.getMessage();
         ChatMessageContent content = (ChatMessageContent) message.getContent();
-        System.out.println(ANSI_CYAN + "(" + content.getUserName() + ")" + ANSI_RESET + " " + content.getMessage());
+        String name = Routing.getInstance().getNameOfUid(message.getHeader().getUidSender());
+        System.out.println(ANSI_CYAN + "(" + name + ")" + ANSI_RESET + " " + content.getMessage());
     }
 
     public static void shutDown() {
