@@ -3,18 +3,18 @@ package chat.message.model;
 import chat.Uid;
 
 public class Header {
-    private final Integer messageType;
+    private final Integer type;
     private final Uid uidSender;
     private final Uid uidReceiver;
 
     public Header(MessageType type, Uid uidSender, Uid uidReceiver) {
-        this.messageType = type.getCode();
+        this.type = type.getCode();
         this.uidSender = uidSender;
         this.uidReceiver = uidReceiver;
     }
 
-    public int getMessageType() {
-        return this.messageType;
+    public int getType() {
+        return this.type;
     }
 
     public Uid getUidSender() {

@@ -40,6 +40,7 @@ public class Server implements Runnable {
 
     public static void getUidFromCli() {
         Server._uid = new Uid(Cli.getParamString("ip"), Cli.getParamInt("port"));
+        //InetAddress inetAddress = new InetAddress.;
     }
 
     /**

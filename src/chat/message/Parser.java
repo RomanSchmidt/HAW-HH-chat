@@ -26,7 +26,7 @@ public abstract class Parser {
         if (null != jObject) {
             JsonObject header = jObject.get("header").getAsJsonObject();
             if (null != header) {
-                int messageTypeSearch = header.get("messageType").getAsInt();
+                int messageTypeSearch = header.get("type").getAsInt();
                 MessageType messageType = MessageType.mapFromCode(messageTypeSearch);
                 if (messageType != null) {
                     JsonObject uIDSenderJSON = header.getAsJsonObject().get("uidSender").getAsJsonObject();

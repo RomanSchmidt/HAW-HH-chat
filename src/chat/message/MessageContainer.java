@@ -22,13 +22,13 @@ public class MessageContainer {
     public MessageContainer(AMessage message, AClient client) {
         this(client);
         this._message = message;
-        this._messageType = MessageType.mapFromCode(message.getHeader().getMessageType());
+        this._messageType = MessageType.mapFromCode(message.getHeader().getType());
         this._jsonString = Parser.transfer(message);
     }
 
     public MessageContainer(String jsonString) {
         this._message = Parser.transfer(jsonString);
-        this._messageType = MessageType.mapFromCode(this._message.getHeader().getMessageType());
+        this._messageType = MessageType.mapFromCode(this._message.getHeader().getType());
         String name = this._message.getSenderName();
         this._client = new OwnClient(this._message.getHeader().getUidSender(), name);
         this._jsonString = jsonString;
