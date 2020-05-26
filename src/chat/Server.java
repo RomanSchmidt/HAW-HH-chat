@@ -9,10 +9,7 @@ import chat.routing.Routing;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.stream.Collectors;
 
 /**
@@ -77,10 +74,13 @@ public class Server implements Runnable {
             while (true) {
                 try (Socket clientSocket = socket.accept()) {
                     BufferedReader messageBuffer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                    System.out.println("income: " + clientSocket.getInetAddress());
                     String jsonString = messageBuffer.lines().collect(Collectors.joining());
                     System.out.println("got jsonString: " + jsonString);
                     MessageContainer message = new MessageContainer(jsonString);
                     Communicator.receive(message);
+                } catch (SocketException e) {
+                    System.err.println("socket error");
                 }
             }
         } catch (IOException e) {

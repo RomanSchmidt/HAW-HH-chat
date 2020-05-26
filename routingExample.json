@@ -1,31 +1,16 @@
 {
   "header": {
-    "type": 3,
     "uidSender": {
-      "ip": "10.10.10.10",
-      "port": 99
+      "port": 4242,
+      "ip": "10.8.0.7"
     },
     "uidReceiver": {
-      "ip": "10.10.10.11",
-      "port": 99
-    }
+      "port": 55555,
+      "ip": "10.8.0.12"
+    },
+    "type": 3
   },
   "content": {
-    "routingTable": [
-      {
-        "destinationUid": {
-          "ip": "10.10.10.11",
-          "port": 99
-        },
-        "costsToDestination": 1
-      },
-      {
-        "destinationUid": {
-          "ip": "10.10.10.10",
-          "port": 99
-        },
-        "costsToDestination": 0
-      }
-    ]
+    "userName": "Johannes"
   }
 }
