@@ -28,6 +28,7 @@ public abstract class Cli {
     public static final String ANSI_WHITE = "\u001B[37m";
     private static Client _client;
     private static AClient _clientToChatWith;
+    private static boolean sendToAll;
 
     public Cli() {
 
@@ -81,6 +82,8 @@ public abstract class Cli {
             case Select:
                 Cli._chooseClient();
                 return true;
+            case SendAll:
+                Cli._clientToChatWith=null;
             case UserList:
                 Cli._printAllClients();
                 return true;
@@ -99,6 +102,22 @@ public abstract class Cli {
         }
         System.err.println("can not find execution for commandContainer: " + command.getName());
         return false;
+    }
+
+    private static void _sendToAll(String chatMessage) {
+        for (AClient client : Routing.getInstance().getAllClients()) {
+            System.out.println(client.getName());
+            if (client instanceof AClient) {
+                ChatMessageContent content = new ChatMessageContent(chatMessage);
+                ChatMessage message = (ChatMessage) AMessage.createByType(MessageType.chatMessage, Server.getUid(), client.getUid(), content);
+                System.out.println("chat to: " + content.getUserName());
+                MessageContainer container = new MessageContainer(message, client);
+                client.sendMessage(container);
+                System.out.println(ANSI_BLUE + client.getName() + ANSI_RESET);
+            } else {
+                System.out.println(client.getName());
+            }
+        }
     }
 
     private static void _printTable() {
@@ -148,8 +167,8 @@ public abstract class Cli {
 
     private static void _sendChatMessage(String chatMessage) {
         if (null == Cli._clientToChatWith) {
-            System.out.println(ANSI_RED + "chose a user before." + ANSI_RESET);
-            Cli._printAllCommands();
+            _sendToAll(chatMessage);
+//            Cli._printAllCommands();
         } else {
             ChatMessageContent content = new ChatMessageContent(chatMessage);
             ChatMessage message = (ChatMessage) AMessage.createByType(MessageType.chatMessage, Server.getUid(), Cli._clientToChatWith.getUid(), content);
