@@ -87,6 +87,7 @@ public class Routing {
             this._clientsByUId.put(client.getUid(), client);
             if (!client.getUid().equals(gateway)) {
                 if (!this._clientsByGateWayUid.containsKey(gateway)) {
+                    System.out.println(Cli.ANSI_CYAN + "new Client: " + Cli.ANSI_RESET + Cli.ANSI_BLUE + client.getName() + Cli.ANSI_RESET);
                     this._clientsByGateWayUid.put(gateway, new ArrayList<>());
                 }
                 this._clientsByGateWayUid.get(gateway).add(client);
@@ -158,6 +159,7 @@ public class Routing {
             if (!uid.equals(fromUid)) {
                 AMessage message = AMessage.createByType(MessageType.routingResponse, Server.getUid(), uid, content);
                 AClient client = this._clientsByUId.get(uid);
+                System.out.println("table to: " + client.getUid() + "(" + client.getName() + ")");
                 Communicator.send(new MessageContainer(message, client));
             }
         });
@@ -225,7 +227,7 @@ public class Routing {
 
     public String getNameOfUid(Uid uidSender) {
         AClient client = this._clientsByUId.get(uidSender);
-        if(client == null) {
+        if (client == null) {
             return "";
         }
         return client.getName();

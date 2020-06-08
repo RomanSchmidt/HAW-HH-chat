@@ -5,12 +5,15 @@ import chat.cli.Cli;
 public class Main {
 
     public static void main(String[] args) {
-        Thread server = new Thread(new Server());
-        server.start();
+        Server server  =new Server();
+        server.connect();
+
+        Thread serverTh = new Thread(server);
+        serverTh.start();
         try {
             Cli.getCommands();
         } catch (InterruptedException e) {
-            server.interrupt();
+            serverTh.interrupt();
         }
     }
 }

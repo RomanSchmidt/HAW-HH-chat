@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class Server implements Runnable {
     private static Uid _uid;
     private static String _name;
+    private ServerSocket _socket;
 
     Server() {
         Server._name = Cli.getParamString("name");
@@ -37,7 +38,6 @@ public class Server implements Runnable {
 
     public static void getUidFromCli() {
         Server._uid = new Uid(Cli.getParamString("ip"), Cli.getParamInt("port"));
-        //InetAddress inetAddress = new InetAddress.;
     }
 
     /**
@@ -64,28 +64,36 @@ public class Server implements Runnable {
         throw new InterruptedException();
     }
 
+    public void connect() {
+        try {
+            InetAddress addr = InetAddress.getByName(Server._uid.getIp());
+            this._socket = new ServerSocket(Server._uid.getPort(), 0, addr);
+        } catch (IOException e) {
+            System.out.println(Cli.ANSI_RED + "connection invalid" + Cli.ANSI_RESET);
+            Server.getUidFromCli();
+            this.connect();
+        }
+    }
+
     /**
      * start server and listen on a specific port
      */
     @Override
     public void run() {
-        try {
-            ServerSocket socket = new ServerSocket(Server._uid.getPort());
-            while (true) {
-                try (Socket clientSocket = socket.accept()) {
-                    BufferedReader messageBuffer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                    System.out.println("income: " + clientSocket.getInetAddress());
-                    String jsonString = messageBuffer.lines().collect(Collectors.joining());
-                    System.out.println("got jsonString: " + jsonString);
-                    MessageContainer message = new MessageContainer(jsonString);
-                    Communicator.receive(message);
-                } catch (SocketException e) {
-                    System.err.println("socket error");
-                }
+        while (true) {
+            try (Socket clientSocket = this._socket.accept()) {
+                BufferedReader messageBuffer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                System.out.println("income: " + clientSocket.getInetAddress());
+                String jsonString = messageBuffer.lines().collect(Collectors.joining());
+                System.out.println("got jsonString: " + jsonString);
+                MessageContainer message = new MessageContainer(jsonString);
+                Communicator.receive(message);
+            } catch (SocketException e) {
+                System.err.println("socket error");
+                this.connect();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            System.err.println("connection invalid");
-            Server.getUidFromCli();
         }
     }
 }
