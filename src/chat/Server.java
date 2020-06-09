@@ -70,6 +70,7 @@ public class Server implements Runnable {
             this._socket = new ServerSocket(Server._uid.getPort(), 0, addr);
         } catch (IOException e) {
             System.out.println(Cli.ANSI_RED + "connection invalid" + Cli.ANSI_RESET);
+            Routing.getInstance().removeClient(new Client(Server._uid, Server._name), false);
             Server.getUidFromCli();
             this.connect();
         }
