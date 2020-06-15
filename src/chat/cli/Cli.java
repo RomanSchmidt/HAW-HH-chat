@@ -230,7 +230,7 @@ public abstract class Cli {
     }
 
     private static void _connect(Uid uid) {
-        if (null != Cli._client) {
+        if (null != Cli._client && !Cli._client.getUid().equals(uid)) {
             Cli._client.disconnect(false, false);
         }
         Cli._client = Client.connect(Server.getUid(), uid, Server.getName());
