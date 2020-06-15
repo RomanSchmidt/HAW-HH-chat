@@ -22,7 +22,7 @@ public class Server implements Runnable {
     private ServerSocket _socket;
 
     Server() {
-        Server._name = Cli.getParamString("name");
+        Server._name = Cli.getParamString("name", "roman");
         Server.getUidFromCli();
         Client client = new Client(Server._uid, Server._name);
         Routing.getInstance().addClient(client, Server.getUid(), 0, false);
@@ -37,27 +37,22 @@ public class Server implements Runnable {
     }
 
     public static void getUidFromCli() {
-        Server._uid = new Uid(Cli.getParamString("ip"), Cli.getParamInt("port"));
+        Server._uid = new Uid(Cli.getParamString("ip", Server.getLocalHostAddress()), Cli.getParamInt("port", 8080));
     }
 
-    /**
-     * get local ip
-     */
-    private static String _getOwnIp() {
+    public static String getLocalHostAddress() {
+        InetAddress inetAddress = null;
+        String hostAddress = "localhost";
         try {
-            InetAddress inetAddress = InetAddress.getLocalHost();
-            System.out.println("IP Address:- " + inetAddress.getHostAddress());
-            return inetAddress.getHostAddress();
-        } catch (UnknownHostException e) {
-            System.err.println("not able to resolve local ip: " + e.getMessage());
-            e.printStackTrace();
-            System.exit(1);
+            inetAddress = InetAddress.getLocalHost();
+            hostAddress = inetAddress.getHostAddress();
+        } catch (UnknownHostException ignored) {
         }
-        return null;
+        return hostAddress;
     }
 
     public static void disconnect() {
-        Routing.getInstance().getClient(Server.getUid()).disconnect(false);
+        Routing.getInstance().getClient(Server.getUid()).disconnect(false, true);
     }
 
     public static void quit() throws InterruptedException {
@@ -69,8 +64,8 @@ public class Server implements Runnable {
             InetAddress addr = InetAddress.getByName(Server._uid.getIp());
             this._socket = new ServerSocket(Server._uid.getPort(), 0, addr);
         } catch (IOException e) {
-            System.out.println(Cli.ANSI_RED + "connection invalid" + Cli.ANSI_RESET);
-            Routing.getInstance().removeClient(new Client(Server._uid, Server._name), false);
+            Cli.printError("connection invalid");
+            Routing.getInstance().removeClient(new Client(Server._uid, Server._name), false, false);
             Server.getUidFromCli();
             this.connect();
         }
@@ -84,13 +79,13 @@ public class Server implements Runnable {
         while (true) {
             try (Socket clientSocket = this._socket.accept()) {
                 BufferedReader messageBuffer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                System.out.println("income: " + clientSocket.getInetAddress());
+                Cli.printDebug("income", clientSocket.getInetAddress().toString());
                 String jsonString = messageBuffer.lines().collect(Collectors.joining());
-                System.out.println("got jsonString: " + jsonString);
+                Cli.printDebug("got jsonString", jsonString);
                 MessageContainer message = new MessageContainer(jsonString);
                 Communicator.receive(message);
             } catch (SocketException e) {
-                System.err.println("socket error");
+                Cli.printError("socket error");
                 this.connect();
             } catch (IOException e) {
                 e.printStackTrace();

@@ -87,52 +87,68 @@ public class Routing {
             this._clientsByUId.put(client.getUid(), client);
             if (!client.getUid().equals(gateway)) {
                 if (!this._clientsByGateWayUid.containsKey(gateway)) {
-                    System.out.println(Cli.ANSI_CYAN + "new Client: " + Cli.ANSI_RESET + Cli.ANSI_BLUE + client.getName() + Cli.ANSI_RESET);
                     this._clientsByGateWayUid.put(gateway, new ArrayList<>());
                 }
                 this._clientsByGateWayUid.get(gateway).add(client);
             }
-        }
-        if (doPopulate) {
-            this._populateChanges(Server.getUid());
+            if (doPopulate) {
+                this._populateChanges(Server.getUid());
+            }
         }
     }
 
-    public void removeClient(AClient client, boolean populate) {
+    public void removeClient(AClient client, boolean populate, boolean doQuit) {
+
         RoutingTableElement element = this._tableHandler.removeClient(client.getUid());
         if (null == element || null == element.getDestinationName()) {
             return;
         }
         Cli.clientLeft(client, element.getDestinationName());
-        this._clientsByName.remove(element.getDestinationName());
-        this._clientsByUId.remove(client.getUid());
-        this._clientsByGateWayUid.remove(client.getUid());
-        this._clientsByGateWayUid.forEach((uid, clients) -> {
-            clients.removeIf(clientInMap -> {
-                return clientInMap.getUid().equals(client.getUid());
-            });
-        });
-
         if (client instanceof Client) {
-            this._populateDisconnect((Client) client);
-            System.out.println("shoot down?");
-            Communicator.getExecutor().shutdown();
-            try {
-                if (!Communicator.getExecutor().awaitTermination(10, TimeUnit.SECONDS)) {
-                    Communicator.getExecutor().shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                System.out.println("down");
-            } finally {
-                Cli.shutDown();
+            this._populateDisconnect();
+
+            if (doQuit) {
+                this._quit();
+                return;
             }
-        } else if (populate) {
+        }
+        this._removeClient(client, element);
+        if (populate) {
             this._populateChanges(client.getUid());
         }
     }
 
-    private void _populateDisconnect(Client discoClient) {
-        System.out.println("populating disconnect");
+    private void _removeClient(AClient client, RoutingTableElement element) {
+        this._clientsByName.remove(element.getDestinationName());
+        this._clientsByUId.remove(client.getUid());
+        this._ownClientUids.remove(client.getUid());
+        this._clientsByGateWayUid.forEach((uid, clients) -> {
+            clients.removeIf(clientInMap -> {
+                if (client.getUid().equals(Server.getUid())) {
+                    return false;
+                }
+                return clientInMap.getUid().equals(client.getUid());
+            });
+        });
+        this._clientsByGateWayUid.remove(client.getUid());
+    }
+
+    private void _quit() {
+        Cli.printDebug("shoot down?");
+        Communicator.getExecutor().shutdown();
+        try {
+            if (!Communicator.getExecutor().awaitTermination(10, TimeUnit.SECONDS)) {
+                Communicator.getExecutor().shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            Cli.printNote("down");
+        } finally {
+            Cli.shutDown();
+        }
+    }
+
+    private void _populateDisconnect() {
+        Cli.printDebug("populating disconnect");
 
         this._ownClientUids.forEach(uid -> {
             if (uid.equals(Server.getUid())) {
@@ -142,13 +158,13 @@ public class Routing {
             if (client == null) {
                 return;
             }
-            DisconnectMessage message = (DisconnectMessage) AMessage.createByType(MessageType.disconnect, discoClient.getUid(), uid, null);
+            DisconnectMessage message = (DisconnectMessage) AMessage.createByType(MessageType.disconnect, Server.getUid(), uid, null);
             Communicator.send(new MessageContainer(message, client));
         });
     }
 
     private void _populateChanges(Uid fromUid) {
-        System.out.println("populating table");
+        Cli.printDebug("populating table");
         ArrayList<RoutingTableMessageElement> elements = new ArrayList<>();
         this._tableHandler.getTable().forEach((uid, routingTableElement) -> {
             elements.add(new RoutingTableMessageElement(routingTableElement.getDestinationUid(), routingTableElement.getDestinationName(), routingTableElement.getMetric()));
@@ -159,7 +175,7 @@ public class Routing {
             if (!uid.equals(fromUid)) {
                 AMessage message = AMessage.createByType(MessageType.routingResponse, Server.getUid(), uid, content);
                 AClient client = this._clientsByUId.get(uid);
-                System.out.println("table to: " + client.getUid() + "(" + client.getName() + ")");
+                Cli.printDebug("table to: " + client.getUid() + "(" + client.getName() + ")");
                 Communicator.send(new MessageContainer(message, client));
             }
         });
@@ -170,16 +186,16 @@ public class Routing {
         if (clients == null) {
             return;
         }
-        System.out.println("cleanup: " + uid);
-        System.out.println(handledUids.toString());
+        Cli.printDebug("cleanup: " + uid);
+        Cli.printDebug(handledUids.toString());
         ArrayList<AClient> clientsToDelete = new ArrayList<>();
         clients.forEach(client -> {
-            if (!handledUids.contains(client.getUid())) {
+            if (!handledUids.contains(client.getUid()) && !client.getUid().equals(Server.getUid())) {
                 clientsToDelete.add(client);
             }
         });
         clientsToDelete.forEach(client -> {
-            this.removeClient(client, false);
+            this.removeClient(client, false, false);
         });
     }
 
@@ -192,7 +208,7 @@ public class Routing {
         if (null == element) {
             return null;
         }
-        System.out.println("got element for receiver");
+        Cli.printDebug("got element for receiver");
         return this._clientsByUId.get(element.getNextGateWayUid());
     }
 
@@ -214,10 +230,10 @@ public class Routing {
     public void sendMessage(MessageContainer messageContainer) {
         AClient receiverClient = this.getReceiver(messageContainer.getMessage().getHeader().getUidReceiver());
         if (null == receiverClient) {
-            System.err.println("no route found!");
+            Cli.printError("no route found!");
             return;
         }
-        System.out.println("got receiver: " + receiverClient.getUid());
+        Cli.printDebug("got receiver", receiverClient.getUid().toString());
         if (receiverClient.getUid().equals(Server.getUid())) {
             Cli.printChatMessage(messageContainer);
         } else {

@@ -1,6 +1,7 @@
 package chat.routing;
 
 import chat.Uid;
+import chat.cli.Cli;
 import chat.client.AClient;
 
 import java.util.HashMap;
@@ -22,7 +23,9 @@ public class RoutingTableHandler {
                 gateWayUid,
                 metric
         );
-        this._table.put(client.getUid(), element);
+        if (null == this._table.put(client.getUid(), element)) {
+            Cli.printInfo("new user", client.getName());
+        }
     }
 
     public RoutingTableElement removeClient(Uid destinationUid) {
@@ -34,7 +37,7 @@ public class RoutingTableHandler {
      */
     @SuppressWarnings("unchecked")
     public HashMap<Uid, RoutingTableElement> getTable() {
-        return (HashMap<Uid, RoutingTableElement>) this._table.clone();
+        return  this._table;//.clone();
     }
 
     public RoutingTableElement getRoutingElementByUid(Uid uid) {

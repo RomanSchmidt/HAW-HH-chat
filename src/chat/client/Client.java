@@ -2,6 +2,7 @@ package chat.client;
 
 import chat.Server;
 import chat.Uid;
+import chat.cli.Cli;
 import chat.communication.Communicator;
 import chat.message.MessageContainer;
 import chat.message.model.ConnectMessage;
@@ -16,7 +17,7 @@ public class Client extends AClient {
     }
 
     public static Client connect(Uid uidSender, Uid uidReceiver, String name) {
-        System.out.println("connecting to: " + uidReceiver.toString());
+        Cli.printDebug("connecting to", uidReceiver.toString());
         Client client = new Client(uidReceiver, name);
         ConnectMessageContent content = new ConnectMessageContent(Server.getName());
         Communicator.send(new MessageContainer(new ConnectMessage(uidSender, uidReceiver, content), client));

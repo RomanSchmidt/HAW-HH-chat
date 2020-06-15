@@ -17,18 +17,18 @@ import java.util.Scanner;
  * commands for all commands in the CLI
  */
 public abstract class Cli {
-    public static final String ANSI_RESET = "\u001B[0m";
-    public static final String ANSI_BLACK = "\u001B[30m";
-    public static final String ANSI_RED = "\u001B[31m";
-    public static final String ANSI_GREEN = "\u001B[32m";
-    public static final String ANSI_YELLOW = "\u001B[33m";
-    public static final String ANSI_BLUE = "\u001B[34m";
-    public static final String ANSI_PURPLE = "\u001B[35m";
-    public static final String ANSI_CYAN = "\u001B[36m";
-    public static final String ANSI_WHITE = "\u001B[37m";
+    private static final String ANSI_RESET = "\u001B[0m";
+    private static final String ANSI_BLACK = "\u001B[30m";
+    private static final String ANSI_RED = "\u001B[31m";
+    private static final String ANSI_GREEN = "\u001B[32m";
+    private static final String ANSI_YELLOW = "\u001B[33m";
+    private static final String ANSI_BLUE = "\u001B[34m";
+    private static final String ANSI_PURPLE = "\u001B[35m";
+    private static final String ANSI_CYAN = "\u001B[36m";
+    private static final String ANSI_WHITE = "\u001B[37m";
     private static Client _client;
     private static AClient _clientToChatWith;
-    private static boolean sendToAll;
+    private static boolean _debug = false;
 
     public Cli() {
 
@@ -38,13 +38,13 @@ public abstract class Cli {
         if (Cli._clientToChatWith != null && Cli._clientToChatWith.getUid().equals(client.getUid())) {
             Cli._clientToChatWith = null;
         }
-        System.out.println(ANSI_RED + "removing: " + ANSI_RESET + client.getUid() + ANSI_BLUE + " (" + name + ")" + ANSI_RESET);
+        Cli.printNote("removing", client.getUid() + Cli.ANSI_BLUE + " (" + name + ")" + Cli.ANSI_RESET);
     }
 
     /**
      * run, map the string to commands, execute commands, quit if the exit command is send
      */
-    public static void getCommands() throws InterruptedException {
+    public static void getCommands() {
         boolean doRun = true;
         Cli._printAllCommands();
         while (doRun) {
@@ -52,7 +52,7 @@ public abstract class Cli {
             if (command.startsWith("/")) {
                 CliCommand convertedCommand = Cli._convertCommand(command);
                 if (convertedCommand == null) {
-                    System.out.print(ANSI_RED + "unknown command: " + ANSI_RESET + command + "\n");
+                    Cli.printError("unknown command", command);
                 } else {
                     doRun = Cli._executeCommand(convertedCommand);
                 }
@@ -68,7 +68,7 @@ public abstract class Cli {
     private static void _printAllCommands() {
         System.out.println("___________COMMANDS___________");
         for (CliCommand command : CliCommand.values()) {
-            System.out.println(ANSI_BLUE + command.getName() + ANSI_RESET + " (" + command.getDescription() + ")");
+            System.out.println(Cli.ANSI_BLUE + command.getName() + Cli.ANSI_RESET + " (" + command.getDescription() + ")");
         }
         System.out.println("______________________________");
     }
@@ -83,39 +83,91 @@ public abstract class Cli {
                 Cli._chooseClient();
                 return true;
             case SendAll:
-                Cli._clientToChatWith=null;
+                Cli._clientToChatWith = null;
+                return true;
+            case Debug:
+                Cli._toggleDebug();
+                return true;
             case UserList:
                 Cli._printAllClients();
                 return true;
             case Connect:
-                String ip = Cli.getParamString("ip");
-                Integer port = Cli.getParamInt("port");
+                String ip = Cli.getParamString("ip", Server.getLocalHostAddress());
+                Integer port = Cli.getParamInt("port", 8081);
                 Cli._connect(new Uid(ip, port));
                 return true;
             case Exit:
-                System.out.println("exiting: " + Server.getUid());
+                Cli.printSuccess("exiting", Server.getUid().toString());
                 Server.disconnect();
                 return false;
             case Routing:
                 Cli._printTable();
                 return true;
         }
-        System.err.println("can not find execution for commandContainer: " + command.getName());
+        Cli.printError("can not find execution for command", command.getName());
         return false;
     }
 
+    private static void _toggleDebug() {
+        Cli._debug = !Cli._debug;
+        Cli.printInfo("Debug is " + (Cli._debug ? "on" : "off"));
+    }
+
+    public static void printInfo(String notification) {
+        Cli.printInfo(notification, null);
+    }
+
+    public static void printInfo(String notification, String value) {
+        Cli._print(notification, value, Cli.ANSI_CYAN);
+    }
+
+    public static void printError(String notification) {
+        Cli.printError(notification, null);
+    }
+
+    public static void printError(String notification, String value) {
+        Cli._print(notification, value, Cli.ANSI_RED);
+    }
+
+    public static void printNote(String notification) {
+        Cli.printNote(notification, null);
+    }
+
+    public static void printNote(String notification, String value) {
+        Cli._print(notification, value, Cli.ANSI_BLUE);
+    }
+
+    public static void printSuccess(String notification) {
+        Cli.printSuccess(notification, null);
+    }
+
+    public static void printSuccess(String notification, String value) {
+        Cli._print(notification, value, Cli.ANSI_GREEN);
+    }
+
+    public static void printDebug(String notification) {
+        Cli.printDebug(notification, null);
+    }
+
+    public static void printDebug(String notification, String value) {
+        if (Cli._debug) {
+            Cli._print(notification, value, Cli.ANSI_YELLOW);
+        }
+    }
+
+    private static void _print(String notification, String value, String color) {
+        System.out.println(color + notification + Cli.ANSI_RESET + (value == null ? "" : ": " + value));
+    }
+
     private static void _sendToAll(String chatMessage) {
+        Cli.printInfo("(to all)", chatMessage);
         for (AClient client : Routing.getInstance().getAllClients()) {
-            System.out.println(client.getName());
-            if (client instanceof AClient) {
+            if (!(client instanceof Client)) {
                 ChatMessageContent content = new ChatMessageContent(chatMessage);
+                Cli.printDebug("chat(" + content.getUserName() + ")", chatMessage);
                 ChatMessage message = (ChatMessage) AMessage.createByType(MessageType.chatMessage, Server.getUid(), client.getUid(), content);
-                System.out.println("chat to: " + content.getUserName());
                 MessageContainer container = new MessageContainer(message, client);
                 client.sendMessage(container);
-                System.out.println(ANSI_BLUE + client.getName() + ANSI_RESET);
-            } else {
-                System.out.println(client.getName());
             }
         }
     }
@@ -139,17 +191,17 @@ public abstract class Cli {
 
     private static void _chooseClient() {
         Cli._clientToChatWith = null;
-        String clientName = Cli.getParamString("client name");
+        String clientName = Cli.getParamString("client name", "roman2");
         AClient client = Routing.getInstance().getClient(clientName);
         if (null == client) {
-            System.out.println(ANSI_RED + "unknown User" + ANSI_RESET);
+            Cli.printError("unknown User");
         } else {
             if (clientName.equals(Server.getName())) {
-                System.out.println(ANSI_RED + "it's not healthy to talk to your self" + ANSI_RESET);
+                Cli.printError("it's not healthy to talk to your self");
                 return;
             }
             Cli._clientToChatWith = client;
-            System.out.println(ANSI_GREEN + "chosen user: " + ANSI_RESET + client.getName());
+            Cli.printSuccess("chosen user", client.getName());
         }
     }
 
@@ -157,7 +209,7 @@ public abstract class Cli {
         System.out.println("_____________USER_____________");
         for (AClient client : Routing.getInstance().getAllClients()) {
             if (client instanceof Client) {
-                System.out.println(ANSI_BLUE + client.getName() + ANSI_RESET);
+                System.out.println(Cli.ANSI_BLUE + client.getName() + Cli.ANSI_RESET);
             } else {
                 System.out.println(client.getName());
             }
@@ -167,12 +219,11 @@ public abstract class Cli {
 
     private static void _sendChatMessage(String chatMessage) {
         if (null == Cli._clientToChatWith) {
-            _sendToAll(chatMessage);
-//            Cli._printAllCommands();
+            Cli._sendToAll(chatMessage);
         } else {
             ChatMessageContent content = new ChatMessageContent(chatMessage);
             ChatMessage message = (ChatMessage) AMessage.createByType(MessageType.chatMessage, Server.getUid(), Cli._clientToChatWith.getUid(), content);
-            System.out.println("chat to: " + content.getUserName());
+            Cli.printNote("(" + content.getUserName() + ")", chatMessage);
             MessageContainer container = new MessageContainer(message, Cli._clientToChatWith);
             Cli._clientToChatWith.sendMessage(container);
         }
@@ -180,23 +231,34 @@ public abstract class Cli {
 
     private static void _connect(Uid uid) {
         if (null != Cli._client) {
-            Cli._client.disconnect(false);
+            Cli._client.disconnect(false, false);
         }
         Cli._client = Client.connect(Server.getUid(), uid, Server.getName());
     }
 
-    public static String getParamString(String name) {
-        System.out.print(name + ": ");
+    public static String getParamString(String name, String defaultValue) {
+        Cli._printGetParam(name, defaultValue);
         Scanner in = new Scanner(System.in);
 
-        return in.next();
+        return _toggleInput(in.next(), defaultValue);
     }
 
-    public static Integer getParamInt(String name) {
-        System.out.print(name + ": ");
+    public static Integer getParamInt(String name, int defaultValue) {
+        Cli._printGetParam(name, defaultValue);
         Scanner in = new Scanner(System.in);
 
-        return in.nextInt();
+        return _toggleInput(in.nextInt(), defaultValue);
+    }
+
+    private static <T> T _toggleInput(T value, T defaultValue) {
+        if (value.toString().equals("0")) {
+            return defaultValue;
+        }
+        return value;
+    }
+
+    private static <T> void _printGetParam(String name, T defaultValue) {
+        System.out.print(name + " (0 for \"" + defaultValue + "\"): ");
     }
 
     // convert the string to known commands from CliCommand or return null
@@ -212,7 +274,7 @@ public abstract class Cli {
 
     // get command and parameters from system input
     private static String _readNextCommand() {
-        System.out.print("enter command: ");
+        Cli.printInfo("waiting for commands");
         return new Scanner(System.in).nextLine();
     }
 
@@ -220,11 +282,11 @@ public abstract class Cli {
         ChatMessage message = (ChatMessage) messageContainer.getMessage();
         ChatMessageContent content = (ChatMessageContent) message.getContent();
         String name = Routing.getInstance().getNameOfUid(message.getHeader().getUidSender());
-        System.out.println(ANSI_CYAN + "(" + name + ")" + ANSI_RESET + " " + content.getMessage());
+        Cli.printInfo("(" + name + ")", content.getMessage());
     }
 
     public static void shutDown() {
-        System.out.println("tschööö");
+        Cli.printInfo("tschööö");
         try {
             Server.quit();
         } catch (InterruptedException ignored) {

@@ -1,6 +1,7 @@
 package chat.client;
 
 import chat.Uid;
+import chat.cli.Cli;
 import chat.communication.Communicator;
 import chat.message.MessageContainer;
 import chat.routing.Routing;
@@ -23,11 +24,11 @@ public abstract class AClient implements Actor {
     }
 
     public void sendMessage(MessageContainer message) {
-        System.out.println("sending message to server: " + message.getMessage().getHeader().getUidReceiver() + " (" + message.getMessage().getHeader().getUidReceiver() + ")");
+        Cli.printDebug("sending message to server", message.getMessage().getHeader().getUidReceiver() + " (" + message.getMessage().getHeader().getUidReceiver() + ")");
         Communicator.send(message);
     }
 
-    public void disconnect(boolean populate) {
-        Routing.getInstance().removeClient(this, populate);
+    public void disconnect(boolean populate, boolean doQuit) {
+        Routing.getInstance().removeClient(this, populate, doQuit);
     }
 }

@@ -5,15 +5,16 @@ package chat.cli;
  */
 public enum CliCommand {
     Help("/h", "help"),
-    Select("/m", "messageTo"),
-    SendAll("/a","sendToAll"),
+    Select("/m", "send private message"),
+    SendAll("/a","send message to all"),
     UserList("/u", "user"),
     Connect("/c", "connect"),
     Exit("/q", "quit"),
-    Routing("/r", "routing");
+    Routing("/r", "routing"),
+    Debug("/d", "toggle debug");
 
     private final String _name;
-    private String _description;
+    private final String _description;
 
     CliCommand(String name, String description) {
         this._name = name;

@@ -1,6 +1,7 @@
 package chat.message;
 
 import chat.Uid;
+import chat.cli.Cli;
 import chat.message.model.*;
 import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
@@ -17,11 +18,10 @@ public abstract class Parser {
 
     public static AMessage transfer(String jsonString) {
         if (!Parser.isJsonValid(jsonString)) {
-            System.err.println("Not valid json: " + jsonString);
+            Cli.printError("Not valid json", jsonString);
             return null;
         }
 
-        // @todo mach schön
         JsonObject jObject = JsonParser.parseString(jsonString).getAsJsonObject();
         if (null != jObject) {
             JsonObject header = jObject.get("header").getAsJsonObject();
@@ -29,63 +29,72 @@ public abstract class Parser {
                 int messageTypeSearch = header.get("type").getAsInt();
                 MessageType messageType = MessageType.mapFromCode(messageTypeSearch);
                 if (messageType != null) {
-                    JsonObject uIDSenderJSON = header.getAsJsonObject().get("uidSender").getAsJsonObject();
-                    Uid uidSender = new Uid(uIDSenderJSON.get("ip").getAsString(), uIDSenderJSON.get("port").getAsInt());
-                    JsonObject uidReceiverJSON = header.getAsJsonObject().get("uidReceiver").getAsJsonObject();
-                    Uid uidReceiver = new Uid(uidReceiverJSON.get("ip").getAsString(), uidReceiverJSON.get("port").getAsInt());
                     JsonElement contentJSONEle = jObject.get("content");
                     JsonObject contentJSON = null;
                     if (null != contentJSONEle) {
                         contentJSON = contentJSONEle.getAsJsonObject();
                     }
-                    String userName = null;
+                    String userName = Parser._getUserName(contentJSON);
 
-                    if(null != contentJSON) {
-                        JsonElement userNameJson = contentJSON.get("userName");
-                        if (null != userNameJson) {
-                            userName = userNameJson.getAsString();
-                        }
-                    }
-                    AContent content = null;
-                    switch (messageType) {
-                        case connect:
-                            if (null == contentJSON) {
-                                break;
-                            }
-                            content = new ConnectMessageContent(userName);
-                            break;
-                        case chatMessage:
-                            if (null == contentJSON) {
-                                break;
-                            }
-                            content = new ChatMessageContent(contentJSON.get("message").getAsString());
-                            break;
-                        case routingResponse:
-                            if (null == contentJSON) {
-                                break;
-                            }
-                            ArrayList<RoutingTableMessageElement> table = new ArrayList<>();
-                            JsonArray routingTableJson = contentJSON.get("routingTable").getAsJsonArray();
-                            for (int j = 0; j < routingTableJson.size(); ++j) {
-                                JsonObject tableElementJson = routingTableJson.get(j).getAsJsonObject();
-                                JsonObject destinationUidJson = tableElementJson.get("destinationUid").getAsJsonObject();
-                                Uid destinationUid = new Uid(destinationUidJson.get("ip").getAsString(), destinationUidJson.get("port").getAsInt());
-                                table.add(new RoutingTableMessageElement(destinationUid, tableElementJson.get("userName").getAsString(), tableElementJson.get("costsToDestination").getAsInt()));
-                            }
-                            content = new RoutingMessageContent(table);
-                            break;
-                    }
                     return AMessage.createByType(
                             messageType,
-                            uidSender,
-                            uidReceiver,
-                            content
+                            Parser._getUid(header.getAsJsonObject().get("uidSender").getAsJsonObject()),
+                            Parser._getUid(header.getAsJsonObject().get("uidReceiver").getAsJsonObject()),
+                            Parser._getContent(messageType, contentJSON, userName)
                     );
                 }
             }
         }
-        System.out.println("parsed message: " + (jObject != null ? jObject.get("header") : "empty"));
+        Cli.printDebug("parsed message", jObject != null ? jObject.get("header").toString() : "empty");
         return null;
+    }
+
+    private static Uid _getUid(JsonObject uidSender) {
+        return new Uid(uidSender.get("ip").getAsString(), uidSender.get("port").getAsInt());
+    }
+
+    private static String _getUserName(JsonObject contentJSON) {
+        String userName = null;
+        if (null != contentJSON) {
+            JsonElement userNameJson = contentJSON.get("userName");
+            if (null != userNameJson) {
+                userName = userNameJson.getAsString();
+            }
+        }
+        return userName;
+    }
+
+    private static AContent _getContent(MessageType messageType, JsonObject contentJSON, String userName) {
+        AContent content = null;
+        switch (messageType) {
+            case connect:
+                if (null == contentJSON) {
+                    break;
+                }
+                content = new ConnectMessageContent(userName);
+                break;
+            case chatMessage:
+                if (null == contentJSON) {
+                    break;
+                }
+                content = new ChatMessageContent(contentJSON.get("message").getAsString());
+                break;
+            case routingResponse:
+                if (null == contentJSON) {
+                    break;
+                }
+                ArrayList<RoutingTableMessageElement> table = new ArrayList<>();
+                JsonArray routingTableJson = contentJSON.get("routingTable").getAsJsonArray();
+                for (int j = 0; j < routingTableJson.size(); ++j) {
+                    JsonObject tableElementJson = routingTableJson.get(j).getAsJsonObject();
+                    JsonObject destinationUidJson = tableElementJson.get("destinationUid").getAsJsonObject();
+                    Uid destinationUid = new Uid(destinationUidJson.get("ip").getAsString(), destinationUidJson.get("port").getAsInt());
+                    table.add(new RoutingTableMessageElement(destinationUid, tableElementJson.get("userName").getAsString(), tableElementJson.get("costsToDestination").getAsInt()));
+                }
+                content = new RoutingMessageContent(table);
+                break;
+        }
+        return content;
     }
 
     public static String transfer(AMessage message) {
